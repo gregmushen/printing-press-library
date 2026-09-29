@@ -24,6 +24,15 @@ func newCallsListCmd(flags *rootFlags) *cobra.Command {
 		Example:     "  bland-pp-cli calls list",
 		Annotations: map[string]string{"pp:endpoint": "calls.list", "pp:method": "GET", "pp:path": "/v1/calls", "mcp:read-only": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if flagFrom < 0 || flagTo < 0 {
+				return usageErr(fmt.Errorf("--from and --to must be nonnegative call indexes"))
+			}
+			if cmd.Flags().Changed("to") && flagTo <= flagFrom {
+				return usageErr(fmt.Errorf("--to must be greater than --from"))
+			}
+			if flagAll && cmd.Flags().Changed("to") {
+				return usageErr(fmt.Errorf("--all cannot be combined with --to; omit --all to request a bounded index range"))
+			}
 			path := "/v1/calls"
 			c, err := flags.newClient()
 			if err != nil {

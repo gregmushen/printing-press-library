@@ -56,24 +56,21 @@ func newNovelCallsSearchTaskCmd(flags *rootFlags) *cobra.Command {
 				return fmt.Errorf("open local call history: %w; first run 'bland-pp-cli calls task run'", err)
 			}
 			defer db.Close()
-			raw, err := db.List(blandTaskHistoryResource, 0)
-			if err != nil {
-				return fmt.Errorf("search local call history: %w", err)
-			}
 			results := make([]blandTaskMatch, 0, 50)
 			needle := strings.ToLower(strings.Join(strings.Fields(query), " "))
-			for _, item := range raw {
+			err = db.ListScan(blandTaskHistoryResource, func(_ string, item json.RawMessage) bool {
 				var row blandTaskMatch
 				if err := json.Unmarshal(item, &row); err != nil {
-					continue
+					return true
 				}
 				if !strings.Contains(strings.ToLower(strings.Join(strings.Fields(row.Task), " ")), needle) {
-					continue
+					return true
 				}
 				results = append(results, row)
-				if len(results) == 50 {
-					break
-				}
+				return len(results) < 50
+			})
+			if err != nil {
+				return fmt.Errorf("search local call history: %w", err)
 			}
 			return printTaskMatches(cmd, flags, results)
 		},

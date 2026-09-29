@@ -8,11 +8,15 @@
   "tests_passed": 107,
   "tests_skipped": 130,
   "tests_unverified": 130,
+  "coverage_hollow": true,
+  "hollow_features": [
+    "calls task run"
+  ],
   "auth_context": {
     "type": "api_key",
     "api_key_available": true
   },
-  "source_fingerprint": "9144eae9d54d6aa7bf3221acf2df6c4f80a7885fb678c7eafb727375304a3b8a",
+  "source_fingerprint": "b1a12f7b21f5766ecc162a6cfdd4b205f0d65c82980a39eec30c73875d05ad0d",
   "source_files": {
     "cmd/bland-pp-cli/main.go": "b37b5938e28f8608419a0306a06401532bce9e3ee5ecd4f5414e9d9b6d88c7b2",
     "cmd/bland-pp-mcp/http_auth_test.go": "7817fc07b1911bd597c2cacb468c1e1530a277c2c9710cf520be45659767b5c5",
@@ -27,8 +31,8 @@
     "internal/cli/calls.go": "d10967457a1fb01611adb48c22434bf00b18b139d789f9a94b0955bb1c21319c",
     "internal/cli/calls_create.go": "dcc617017c518b3c3968e960e52bab91edbe888a7ca1e46654a0952c5ca5b39a",
     "internal/cli/calls_get.go": "d0d284bcc01620585250352a3bd7adb8cc85af41042a7a98825a43780c18c3ce",
-    "internal/cli/calls_list.go": "46b35217026a2a2fd3586f4aa4ebebc77dc350ba696ce5d2e4327d90a89803da",
-    "internal/cli/calls_search_task.go": "7732cfe154c0c11dc050917d703ed8f613bac0452c524f91ff3c3d506f5c3ebb",
+    "internal/cli/calls_list.go": "19be26422db00aad8114a4244de88b71c8edc4d1c38ca5c643e050c903abf92a",
+    "internal/cli/calls_search_task.go": "f9968937910fb7fcda3e7c5ed8e622bb91fd1f59bb94dee4a95395596dea6e06",
     "internal/cli/calls_search_task_test.go": "67d18e78c75040ed804636f5a9b1a900ea13f0250007dfd16629307c7ab445c9",
     "internal/cli/calls_stop.go": "198f564b9b3e1fdef839a50167a3bb342edc70addddbbbe3bb6ea4f4423430ab",
     "internal/cli/calls_stop_call.go": "87eaebf9a2e8acdfb17bb4cea11a403f06690e47b50fba5e5c3e06ad40acdcf3",
