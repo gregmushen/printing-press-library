@@ -8,15 +8,11 @@
   "tests_passed": 107,
   "tests_skipped": 130,
   "tests_unverified": 130,
-  "coverage_hollow": true,
-  "hollow_features": [
-    "calls task run"
-  ],
   "auth_context": {
     "type": "api_key",
     "api_key_available": true
   },
-  "source_fingerprint": "e22c425122b78ae7aed1de1b9096ad1710a3c057ebb9132470d661834dd82565",
+  "source_fingerprint": "9144eae9d54d6aa7bf3221acf2df6c4f80a7885fb678c7eafb727375304a3b8a",
   "source_files": {
     "cmd/bland-pp-cli/main.go": "b37b5938e28f8608419a0306a06401532bce9e3ee5ecd4f5414e9d9b6d88c7b2",
     "cmd/bland-pp-mcp/http_auth_test.go": "7817fc07b1911bd597c2cacb468c1e1530a277c2c9710cf520be45659767b5c5",
@@ -29,15 +25,15 @@
     "internal/cli/api_discovery.go": "07c2b21e4630e80a809207a52b9e9a0da0767ce9dcad9a7131cca099c641cb0c",
     "internal/cli/auth.go": "42b325e835a2c2fa3821c3f38dfd70db18fa0319157c75c2a4e897dbe282531a",
     "internal/cli/calls.go": "d10967457a1fb01611adb48c22434bf00b18b139d789f9a94b0955bb1c21319c",
-    "internal/cli/calls_create.go": "dd3e08e3c479a3980559d90552d22752a996eaf9c2b7812db2b7e42be8d42a9a",
-    "internal/cli/calls_get.go": "422725e2725615b37acc5252fccc86057cc8c53a16e1c7afa5cf3c13230c3a8f",
-    "internal/cli/calls_list.go": "b8077bb3769accddf1ba5e4bfd8020fcc894ba5259a719cd7c7cb6491af998f7",
-    "internal/cli/calls_search_task.go": "60213e6552929ec19c21c2fc71488628631385883538800432c689c513943750",
+    "internal/cli/calls_create.go": "dcc617017c518b3c3968e960e52bab91edbe888a7ca1e46654a0952c5ca5b39a",
+    "internal/cli/calls_get.go": "d0d284bcc01620585250352a3bd7adb8cc85af41042a7a98825a43780c18c3ce",
+    "internal/cli/calls_list.go": "46b35217026a2a2fd3586f4aa4ebebc77dc350ba696ce5d2e4327d90a89803da",
+    "internal/cli/calls_search_task.go": "7732cfe154c0c11dc050917d703ed8f613bac0452c524f91ff3c3d506f5c3ebb",
     "internal/cli/calls_search_task_test.go": "67d18e78c75040ed804636f5a9b1a900ea13f0250007dfd16629307c7ab445c9",
     "internal/cli/calls_stop.go": "198f564b9b3e1fdef839a50167a3bb342edc70addddbbbe3bb6ea4f4423430ab",
     "internal/cli/calls_stop_call.go": "87eaebf9a2e8acdfb17bb4cea11a403f06690e47b50fba5e5c3e06ad40acdcf3",
     "internal/cli/calls_task.go": "727ee710a289fcfa74456379f50a70dbb6a3bbbfc2013b281862681191bdc86e",
-    "internal/cli/calls_task_run.go": "f16879c2d181b5af87b20389356ef8ce4d4e62b112251ed9dc3c19d8a6570e51",
+    "internal/cli/calls_task_run.go": "3554239a4a4af3a8a469b1edfc3fabc457f817c28aba1196e019491d76ab9a61",
     "internal/cli/calls_task_run_test.go": "4361dd9202b1b9fd4f10453efc042ff49aaa28b16797eb5599b8f17390a5b354",
     "internal/cli/channel_workflow.go": "d967cdf104047d32003dc1bd8fb4d8ac142051042a87434d24eeda0d67347350",
     "internal/cli/data_source.go": "405be0c0e9d972b15ec06ec3bb2a8c9cb05a7bedaba511cc0c9622d9b1de6b60",
@@ -49,7 +45,7 @@
     "internal/cli/feedback.go": "9494d0c9fdcc6a253e703bc3470556222403ea2f1a945c6563bfe3a72f7bf056",
     "internal/cli/helpers.go": "ac4ce379f7df4a107c5bb2e7e59fc826bfa292e57d4cb0cfb3f248a91201d3f5",
     "internal/cli/import.go": "997d6c6e8e768d0ffc451d57b3a4aaf382f9946cbd30e5bee203e28d064029b5",
-    "internal/cli/jobs.go": "5b674714cbe9ea315dc0ec33d12ebe75b4cb6264284f31491b513190ac52a728",
+    "internal/cli/jobs.go": "90185582c1e975178a40813589a6a0e2243878d19240c37653636179a68eae0c",
     "internal/cli/learn_init.go": "9aab646f494ddb9a9647a0f22ba665b3628a6e435667dba40c7d4d79f3f9c88c",
     "internal/cli/learn_init_test.go": "2da46633aec82f761757987c4ddee5e979db1966b78331dafbea385237a163f3",
     "internal/cli/learnings_candidates.go": "f4f1dda279de182ab8fc2856660d47c8551a52c8c2c55312cbad76d765f72294",
@@ -66,7 +62,7 @@
     "internal/cli/profile.go": "d4f2f9628b3f7657b6e7420ec58ebe909ce36f2a9db2e6a57711633f109b6e94",
     "internal/cli/promoted_active.go": "497cb5a4867ce4e6c70124d5659a6df80f97ff77526bb80894cccaf08e327956",
     "internal/cli/promoted_event-stream.go": "fa242807f9e9bd67914ba3999ed45a989fda29268d722da4422ac5f7ddec1665",
-    "internal/cli/resource_paths.go": "37ba5d28b2a0e097a31e66aa6f9b934b15a425b11980a08f2d45e3bee7f9108e",
+    "internal/cli/resource_paths.go": "a2605b801455825777f85629458c1f538c78a3bceef1193308a231b97ea07b9b",
     "internal/cli/root.go": "4dd852748326ccbdbe6d388cda90781f7c988af69c9527a4a33d52cd0f062bd3",
     "internal/cli/root_test.go": "eeca5f71c033c834e47f31223438c7294d508dfd69d016c3a2f4de5b478db17a",
     "internal/cli/search.go": "6ae95c7bd7ab1b91dcc1b90444f0cd25c79d787ce642b2e3732a55531601ebe6",
@@ -195,6 +191,6 @@
     "internal/store/store.go": "e233f0d410015d68be84493ddb8e1c6fced1f53d647d86b8c883c936b405cec2",
     "internal/store/upsert_batch_test.go": "560a6bdea18b2e1c103c93ac551b3dd4c3aed608d441d0f93b938cc4a8a75845",
     "internal/types/types.go": "47845c78643539945d27e46b495cc17a1a36d858d20d727b7531bdf590d70f09",
-    "spec.yaml": "4f1d978bbffe8ecb176544f97ccc62f5d010020863809d5917a317c198e25e03"
+    "spec.yaml": "a368a4b5220c0060cbfcbf7b34fd3d0cc455e2756907c52136dabb05166c778b"
   }
 }

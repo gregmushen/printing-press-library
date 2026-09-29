@@ -27,6 +27,8 @@ type blandCallRecord struct {
 	Error       string          `json:"error_message,omitempty"`
 }
 
+const blandTaskHistoryResource = "bland_task_calls"
+
 func newNovelCallsTaskRunCmd(flags *rootFlags) *cobra.Command {
 	var task, phone string
 	var pollEvery time.Duration
@@ -77,6 +79,22 @@ func newNovelCallsTaskRunCmd(flags *rootFlags) *cobra.Command {
 			if start.CallID == "" {
 				return apiErr(fmt.Errorf("Bland response did not include call_id"))
 			}
+			record := blandCallRecord{CallID: start.CallID, Status: start.Status, Task: task, PhoneNumber: phone}
+			if record.Status == "" {
+				record.Status = "submitted"
+			}
+			fmt.Fprintf(cmd.ErrOrStderr(), "Call started: %s. If monitoring is interrupted, inspect it with 'bland-pp-cli calls get %s'.\n", start.CallID, start.CallID)
+			persistCtx, cancelPersist := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cancelPersist()
+			localStore, openErr := store.OpenWithContext(persistCtx, defaultDBPath("bland-pp-cli"))
+			if openErr != nil {
+				fmt.Fprintf(cmd.ErrOrStderr(), "warning: could not open local task history for call %s: %v\n", start.CallID, openErr)
+			} else {
+				defer localStore.Close()
+				if err := persistBlandTaskCall(localStore, record); err != nil {
+					fmt.Fprintf(cmd.ErrOrStderr(), "warning: could not cache started call %s: %v\n", start.CallID, err)
+				}
+			}
 			if pollEvery <= 0 {
 				pollEvery = 2 * time.Second
 			}
@@ -87,14 +105,13 @@ func newNovelCallsTaskRunCmd(flags *rootFlags) *cobra.Command {
 			defer cancel()
 			ticker := time.NewTicker(pollEvery)
 			defer ticker.Stop()
-			var record blandCallRecord
 			var lastFetchErr error
 			for {
 				data, fetchErr := c.GetNoCache(ctx, "/v1/calls/"+start.CallID, nil)
 				if fetchErr == nil {
 					lastFetchErr = nil
 					if err := json.Unmarshal(data, &record); err != nil {
-						return apiErr(fmt.Errorf("decoding call %s: %w", start.CallID, err))
+						return reportBlandTaskCallFailure(cmd, flags, localStore, record, fmt.Errorf("decoding call details: %w", err))
 					}
 					if record.CallID == "" {
 						record.CallID = start.CallID
@@ -106,15 +123,15 @@ func newNovelCallsTaskRunCmd(flags *rootFlags) *cobra.Command {
 					lastFetchErr = fetchErr
 					var apiError *client.APIError
 					if errors.As(fetchErr, &apiError) && apiError.StatusCode != 429 && apiError.StatusCode < 500 {
-						return apiErr(fmt.Errorf("fetching call %s status: %w", start.CallID, fetchErr))
+						return reportBlandTaskCallFailure(cmd, flags, localStore, record, fmt.Errorf("fetching call status: %w", fetchErr))
 					}
 				}
 				select {
 				case <-ctx.Done():
 					if lastFetchErr != nil {
-						return apiErr(fmt.Errorf("fetching call %s status before timeout: %w", start.CallID, lastFetchErr))
+						return reportBlandTaskCallFailure(cmd, flags, localStore, record, fmt.Errorf("fetching call status before timeout: %w", lastFetchErr))
 					}
-					return apiErr(fmt.Errorf("call %s did not finish within %s (last status %q)", start.CallID, maxWait, record.Status))
+					return reportBlandTaskCallFailure(cmd, flags, localStore, record, fmt.Errorf("call did not finish within %s (last status %q)", maxWait, record.Status))
 				case <-ticker.C:
 				}
 			}
@@ -124,17 +141,10 @@ func newNovelCallsTaskRunCmd(flags *rootFlags) *cobra.Command {
 			if record.PhoneNumber == "" {
 				record.PhoneNumber = phone
 			}
-			localStore, openErr := store.OpenWithContext(cmd.Context(), defaultDBPath("bland-pp-cli"))
-			if openErr != nil {
-				return fmt.Errorf("open local call history: %w", openErr)
-			}
-			defer localStore.Close()
-			raw, marshalErr := json.Marshal(record)
-			if marshalErr != nil {
-				return fmt.Errorf("encode call result: %w", marshalErr)
-			}
-			if err := localStore.Upsert("calls", record.CallID, raw); err != nil {
-				return fmt.Errorf("cache call result: %w", err)
+			if localStore != nil {
+				if err := persistBlandTaskCall(localStore, record); err != nil {
+					fmt.Fprintf(cmd.ErrOrStderr(), "warning: could not cache completed call %s: %v\n", start.CallID, err)
+				}
 			}
 			return printJSONFiltered(cmd.OutOrStdout(), record, flags)
 		},
@@ -144,6 +154,31 @@ func newNovelCallsTaskRunCmd(flags *rootFlags) *cobra.Command {
 	cmd.Flags().DurationVar(&pollEvery, "poll-interval", 2*time.Second, "How often to refresh the call status")
 	cmd.Flags().DurationVar(&maxWait, "max-wait", 10*time.Minute, "Maximum time to wait for the completed call")
 	return cmd
+}
+
+func persistBlandTaskCall(db *store.Store, record blandCallRecord) error {
+	raw, err := json.Marshal(record)
+	if err != nil {
+		return err
+	}
+	return db.Upsert(blandTaskHistoryResource, record.CallID, raw)
+}
+
+func reportBlandTaskCallFailure(cmd *cobra.Command, flags *rootFlags, db *store.Store, record blandCallRecord, cause error) error {
+	record.Error = cause.Error()
+	if db != nil {
+		if err := persistBlandTaskCall(db, record); err != nil {
+			fmt.Fprintf(cmd.ErrOrStderr(), "warning: could not cache interrupted call %s: %v\n", record.CallID, err)
+		}
+	}
+	if flags.asJSON {
+		if err := printJSONFilteredKeep(cmd.OutOrStdout(), map[string]any{
+			"call_id": record.CallID, "status": record.Status, "error": cause.Error(),
+		}, flags, "call_id", "status", "error"); err != nil {
+			return err
+		}
+	}
+	return apiErr(fmt.Errorf("call %s was started; inspect it with 'bland-pp-cli calls get %s': %w", record.CallID, record.CallID, cause))
 }
 
 func isTerminalBlandCall(status string) bool {

@@ -13,8 +13,8 @@ import (
 
 func newCallsListCmd(flags *rootFlags) *cobra.Command {
 	var flagLimit int
-	var flagFrom string
-	var flagTo string
+	var flagFrom int
+	var flagTo int
 	var flagCompleted bool
 	var flagAll bool
 
@@ -34,7 +34,7 @@ func newCallsListCmd(flags *rootFlags) *cobra.Command {
 				"from":      formatCLIParamValue(flagFrom),
 				"to":        formatCLIParamValue(flagTo),
 				"completed": formatCLIParamValue(flagCompleted),
-			}, map[string][]string{"limit": {"limit"}, "from": {"from"}, "to": {"to"}, "completed": {"completed"}}, "", "offset"), nil, flagAll, "", "offset", "limit", 100, "", "", "", cmd.ErrOrStderr())
+			}, map[string][]string{"limit": {"limit"}, "from": {"from"}, "to": {"to"}, "completed": {"completed"}}, "", "offset"), nil, flagAll, "from", "offset", "limit", 100, "", "", "calls", cmd.ErrOrStderr())
 			if err != nil {
 				return classifyAPIError(cmd.OutOrStdout(), err, flags)
 			}
@@ -97,8 +97,8 @@ func newCallsListCmd(flags *rootFlags) *cobra.Command {
 		},
 	}
 	cmd.Flags().IntVar(&flagLimit, "limit", 100, "Limit")
-	cmd.Flags().StringVar(&flagFrom, "from", "", "From")
-	cmd.Flags().StringVar(&flagTo, "to", "", "To")
+	cmd.Flags().IntVar(&flagFrom, "from", 0, "Starting call index (inclusive)")
+	cmd.Flags().IntVar(&flagTo, "to", 0, "Ending call index (exclusive)")
 	cmd.Flags().BoolVar(&flagCompleted, "completed", false, "Completed")
 	cmd.Flags().BoolVar(&flagAll, "all", false, "Fetch all pages")
 

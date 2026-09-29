@@ -221,7 +221,7 @@ func isJobTerminal(body map[string]any) bool {
 	}
 	switch strings.ToLower(status) {
 	case "done", "complete", "completed", "success", "succeeded", "finished",
-		"failed", "errored", "cancelled", "canceled":
+		"failed", "error", "errored", "cancelled", "canceled", "no-answer", "busy", "voicemail":
 		return true
 	}
 	return false

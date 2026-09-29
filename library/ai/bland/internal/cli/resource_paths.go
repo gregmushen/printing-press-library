@@ -33,7 +33,7 @@ var resourceWritePaths = map[string]string{ // #nosec G101 -- endpoint paths, no
 }
 
 var resourceReadConfigs = map[string]resourceReadConfig{
-	"calls": {responsePath: "", paginationType: "offset", cursorParam: "", limitParam: "limit", nextCursorPath: "", hasMoreField: "", pageSize: 100},
+	"calls": {responsePath: "calls", paginationType: "offset", cursorParam: "from", limitParam: "limit", nextCursorPath: "", hasMoreField: "", pageSize: 100},
 }
 
 func resourceReadPath(resource string) (string, error) {

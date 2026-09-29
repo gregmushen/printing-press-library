@@ -75,11 +75,11 @@ paths:
         - name: from
           in: query
           required: false
-          schema: {type: string, format: date-time}
+          schema: {type: integer, minimum: 0}
         - name: to
           in: query
           required: false
-          schema: {type: string, format: date-time}
+          schema: {type: integer, minimum: 0}
         - name: completed
           in: query
           required: false

@@ -149,45 +149,53 @@ func newCallsCreateCmd(flags *rootFlags) *cobra.Command {
 			if err != nil {
 				return classifyAPIError(cmd.OutOrStdout(), err, flags)
 			}
-			if asyncJobID := ExtractJobID(data, "batch_id"); asyncJobID != "" {
+			callID := ExtractJobID(data, "call_id")
+			jobID := callID
+			if jobID == "" {
+				jobID = ExtractJobID(data, "batch_id")
+			}
+			if jobID != "" {
 				_ = RecordJob(JobRow{
-					JobID:          asyncJobID,
+					JobID:          jobID,
 					Resource:       "calls",
 					Endpoint:       "create",
 					Status:         "submitted",
 					StatusResource: "calls",
 					StatusEndpoint: "get",
 				})
-				if flagWait {
-					ctx := cmd.Context()
-					if ctx == nil {
-						ctx = context.Background()
-					}
-					final, werr := WaitForJob(ctx, c, "/v1/calls/{call_id}", asyncJobID, WaitOptions{
-						Interval: flagWaitInterval,
-						Timeout:  flagWaitTimeout,
+			}
+			if flagWait && !flags.dryRun {
+				if callID == "" {
+					return apiErr(fmt.Errorf("cannot wait for call: creation response has no call_id (batch_id: %s)", jobID))
+				}
+				ctx := cmd.Context()
+				if ctx == nil {
+					ctx = context.Background()
+				}
+				final, werr := WaitForJob(ctx, c, replacePathParam("/v1/calls/{call_id}", "call_id", callID), callID, WaitOptions{
+					Interval: flagWaitInterval,
+					Timeout:  flagWaitTimeout,
+				})
+				if werr != nil {
+					_ = RecordJob(JobRow{
+						JobID:    callID,
+						Resource: "calls",
+						Endpoint: "create",
+						Status:   "errored",
+						Error:    werr.Error(),
 					})
-					if werr != nil {
-						_ = RecordJob(JobRow{
-							JobID:    asyncJobID,
-							Resource: "calls",
-							Endpoint: "create",
-							Status:   "errored",
-							Error:    werr.Error(),
-						})
-						return werr
-					}
-					if b, merr := json.Marshal(final); merr == nil {
-						data = b
-					}
-					if st, _ := final["status"].(string); st != "" {
-						_ = RecordJob(JobRow{
-							JobID:    asyncJobID,
-							Resource: "calls",
-							Endpoint: "create",
-							Status:   st,
-						})
-					}
+					return apiErr(fmt.Errorf("call %s was started; inspect it with 'bland-pp-cli calls get %s': %w", callID, callID, werr))
+				}
+				if b, merr := json.Marshal(final); merr == nil {
+					data = b
+				}
+				if st, _ := final["status"].(string); st != "" {
+					_ = RecordJob(JobRow{
+						JobID:    callID,
+						Resource: "calls",
+						Endpoint: "create",
+						Status:   st,
+					})
 				}
 			}
 			// Inspect the mutate response body for a partial-failure-shaped
