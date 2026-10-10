@@ -72,7 +72,7 @@ func newPhoneNumbersListCmd(flags *rootFlags) *cobra.Command {
 			data, prov, err := resolvePaginatedReadWithStrategy(cmd.Context(), c, flags, "auto", "phone-numbers", path, retainCLIQueryParams(cmd, map[string]string{
 				"sort":                           formatCLIParamValue(flagSort),
 				"handle_messaging_profile_error": formatCLIParamValue(flagHandleMessagingProfileError),
-			}, map[string][]string{"sort": {"sort"}, "handle_messaging_profile_error": {"handle-messaging-profile-error"}}, "page", "page"), nil, flagAll, "page", "page", "", 0, "", "", "data", cmd.ErrOrStderr())
+			}, map[string][]string{"sort": {"sort"}, "handle_messaging_profile_error": {"handle-messaging-profile-error"}}, "page", "page"), nil, flagAll, "page[number]", "page", "page[size]", 50, "", "", "data", cmd.ErrOrStderr())
 			if err != nil {
 				return classifyAPIError(cmd.OutOrStdout(), err, flags)
 			}

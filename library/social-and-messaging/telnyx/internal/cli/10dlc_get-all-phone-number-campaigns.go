@@ -55,7 +55,7 @@ func newV10dlcGetAllPhoneNumberCampaignsCmd(flags *rootFlags) *cobra.Command {
 				"recordsPerPage": formatCLIParamValue(flagRecordsPerPage),
 				"page":           formatCLIParamValue(flagPage),
 				"sort":           formatCLIParamValue(flagSort),
-			}, map[string][]string{"recordsPerPage": {"records-per-page"}, "page": {"page"}, "sort": {"sort"}}, "page", "page"), nil, flagAll, "page", "page", "", 0, "", "", "records", cmd.ErrOrStderr())
+			}, map[string][]string{"recordsPerPage": {"records-per-page"}, "page": {"page"}, "sort": {"sort"}}, "page", "page"), nil, flagAll, "page", "page", "recordsPerPage", 100, "", "", "records", cmd.ErrOrStderr())
 			if err != nil {
 				return classifyAPIError(cmd.OutOrStdout(), err, flags)
 			}

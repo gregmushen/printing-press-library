@@ -132,16 +132,10 @@ spend over the window.`,
 				sort.Slice(view.Groups, func(i, j int) bool { return view.Groups[i].Cost > view.Groups[j].Cost })
 			}
 			view.TotalCost = round4(view.TotalCost)
-			// Average over the span the mirror actually covers, not the whole
-			// --since window, so a 3-day-old mirror does not dilute spend 10x.
+			// Average over the requested --since window. The oldest synced
+			// message is not a coverage boundary (quiet days have no rows), so
+			// shrinking the window to it would inflate spend and cut runway.
 			if d, err := parseWindowDays(flagSince); err == nil && d > 0 {
-				if len(msgs) > 0 {
-					if t, err := time.Parse(time.RFC3339, msgs[0].CreatedAt); err == nil {
-						if covered := time.Since(t).Hours() / 24; covered < d {
-							d = covered
-						}
-					}
-				}
 				if d < 1 {
 					d = 1
 				}

@@ -71,7 +71,7 @@ func newPhoneNumbersListWithMessagingSettingsCmd(flags *rootFlags) *cobra.Comman
 				"filter[phone_number][contains]": formatCLIParamValue(flagFilterPhoneNumberContains),
 				"filter[type]":                   formatCLIParamValue(flagFilterType),
 				"sort[phone_number]":             formatCLIParamValue(flagSortPhoneNumber),
-			}, map[string][]string{"filter[messaging_profile_id]": {"filter-messaging-profile-id"}, "filter[phone_number]": {"filter-phone-number"}, "filter[phone_number][contains]": {"filter-phone-number-contains"}, "filter[type]": {"filter-type"}, "sort[phone_number]": {"sort-phone-number"}}, "page", "page"), nil, flagAll, "page", "page", "", 0, "", "", "data", cmd.ErrOrStderr())
+			}, map[string][]string{"filter[messaging_profile_id]": {"filter-messaging-profile-id"}, "filter[phone_number]": {"filter-phone-number"}, "filter[phone_number][contains]": {"filter-phone-number-contains"}, "filter[type]": {"filter-type"}, "sort[phone_number]": {"sort-phone-number"}}, "page", "page"), nil, flagAll, "page[number]", "page", "page[size]", 50, "", "", "data", cmd.ErrOrStderr())
 			if err != nil {
 				return classifyAPIError(cmd.OutOrStdout(), err, flags)
 			}

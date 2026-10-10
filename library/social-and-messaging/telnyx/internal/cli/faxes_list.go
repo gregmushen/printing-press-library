@@ -41,7 +41,7 @@ func newFaxesListCmd(flags *rootFlags) *cobra.Command {
 					return err
 				}
 			}
-			data, prov, err := resolvePaginatedReadWithStrategy(cmd.Context(), c, flags, "auto", "faxes", path, retainCLIQueryParams(cmd, map[string]string{}, map[string][]string{}, "page", "page"), nil, flagAll, "page", "page", "", 0, "", "", "data", cmd.ErrOrStderr())
+			data, prov, err := resolvePaginatedReadWithStrategy(cmd.Context(), c, flags, "auto", "faxes", path, retainCLIQueryParams(cmd, map[string]string{}, map[string][]string{}, "page", "page"), nil, flagAll, "page[number]", "page", "page[size]", 50, "", "", "data", cmd.ErrOrStderr())
 			if err != nil {
 				return classifyAPIError(cmd.OutOrStdout(), err, flags)
 			}

@@ -46,7 +46,7 @@ func newMessagingProfilesListCmd(flags *rootFlags) *cobra.Command {
 			data, prov, err := resolvePaginatedReadWithStrategy(cmd.Context(), c, flags, "auto", "messaging-profiles", path, retainCLIQueryParams(cmd, map[string]string{
 				"filter[name][eq]":       formatCLIParamValue(flagFilterNameEq),
 				"filter[name][contains]": formatCLIParamValue(flagFilterNameContains),
-			}, map[string][]string{"filter[name][eq]": {"filter-name-eq"}, "filter[name][contains]": {"filter-name-contains"}}, "page", "page"), nil, flagAll, "page", "page", "", 0, "", "", "data", cmd.ErrOrStderr())
+			}, map[string][]string{"filter[name][eq]": {"filter-name-eq"}, "filter[name][contains]": {"filter-name-contains"}}, "page", "page"), nil, flagAll, "page[number]", "page", "page[size]", 50, "", "", "data", cmd.ErrOrStderr())
 			if err != nil {
 				return classifyAPIError(cmd.OutOrStdout(), err, flags)
 			}

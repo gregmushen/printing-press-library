@@ -58,7 +58,7 @@ func newV10dlcGetPhoneNumberStatusCmd(flags *rootFlags) *cobra.Command {
 			data, prov, err := resolvePaginatedReadWithStrategy(cmd.Context(), c, flags, "live", "10dlc", path, retainCLIQueryParams(cmd, map[string]string{
 				"recordsPerPage": formatCLIParamValue(flagRecordsPerPage),
 				"page":           formatCLIParamValue(flagPage),
-			}, map[string][]string{"recordsPerPage": {"records-per-page"}, "page": {"page"}}, "page", "page"), nil, flagAll, "page", "page", "", 0, "", "", "records", cmd.ErrOrStderr())
+			}, map[string][]string{"recordsPerPage": {"records-per-page"}, "page": {"page"}}, "page", "page"), nil, flagAll, "page", "page", "recordsPerPage", 100, "", "", "records", cmd.ErrOrStderr())
 			if err != nil {
 				return classifyAPIError(cmd.OutOrStdout(), err, flags)
 			}

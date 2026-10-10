@@ -29,7 +29,12 @@ func withDefaultRecordType(raw string) string {
 		return `{"record_type":"messaging"}`
 	}
 	var m map[string]any
-	if err := json.Unmarshal([]byte(raw), &m); err != nil {
+	if err := json.Unmarshal([]byte(raw), &m); err != nil || m == nil {
+		// Not a JSON object (including literal null): leave it for the
+		// generated parser to accept or reject; never index a nil map.
+		if m == nil && err == nil {
+			return `{"record_type":"messaging"}`
+		}
 		return raw
 	}
 	if _, ok := m["record_type"]; ok {

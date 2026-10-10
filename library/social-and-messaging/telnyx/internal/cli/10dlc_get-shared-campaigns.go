@@ -47,7 +47,7 @@ func newV10dlcGetSharedCampaignsCmd(flags *rootFlags) *cobra.Command {
 				"page":           formatCLIParamValue(flagPage),
 				"recordsPerPage": formatCLIParamValue(flagRecordsPerPage),
 				"sort":           formatCLIParamValue(flagSort),
-			}, map[string][]string{"page": {"page"}, "recordsPerPage": {"records-per-page"}, "sort": {"sort"}}, "page", "page"), nil, flagAll, "page", "page", "", 0, "", "", "records", cmd.ErrOrStderr())
+			}, map[string][]string{"page": {"page"}, "recordsPerPage": {"records-per-page"}, "sort": {"sort"}}, "page", "page"), nil, flagAll, "page", "page", "recordsPerPage", 100, "", "", "records", cmd.ErrOrStderr())
 			if err != nil {
 				return classifyAPIError(cmd.OutOrStdout(), err, flags)
 			}

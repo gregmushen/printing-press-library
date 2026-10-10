@@ -1140,34 +1140,34 @@ func determinePaginationDefaults(resource string) paginationDefaults {
 	switch resource {
 	case "10dlc":
 		return paginationDefaults{
-			cursorParam:    "page[number]",
+			cursorParam:    "page",
 			cursorType:     "page",
 			nextCursorPath: "",
-			limitParam:     "page[size]",
+			limitParam:     "recordsPerPage",
 			limit:          100,
 		}
 	case "10dlc-brand":
 		return paginationDefaults{
-			cursorParam:    "page[number]",
+			cursorParam:    "page",
 			cursorType:     "page",
 			nextCursorPath: "",
-			limitParam:     "page[size]",
+			limitParam:     "recordsPerPage",
 			limit:          100,
 		}
 	case "10dlc-partner-campaign-shared-by-me":
 		return paginationDefaults{
-			cursorParam:    "page[number]",
+			cursorParam:    "page",
 			cursorType:     "page",
 			nextCursorPath: "",
-			limitParam:     "page[size]",
+			limitParam:     "recordsPerPage",
 			limit:          100,
 		}
 	case "10dlc-partner-campaigns":
 		return paginationDefaults{
-			cursorParam:    "page[number]",
+			cursorParam:    "page",
 			cursorType:     "page",
 			nextCursorPath: "",
-			limitParam:     "page[size]",
+			limitParam:     "recordsPerPage",
 			limit:          100,
 		}
 	case "call-control-applications":

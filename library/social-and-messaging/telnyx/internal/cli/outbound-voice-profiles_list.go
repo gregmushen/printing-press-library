@@ -57,7 +57,7 @@ func newOutboundVoiceProfilesListCmd(flags *rootFlags) *cobra.Command {
 			}
 			data, prov, err := resolvePaginatedReadWithStrategy(cmd.Context(), c, flags, "auto", "outbound-voice-profiles", path, retainCLIQueryParams(cmd, map[string]string{
 				"sort": formatCLIParamValue(flagSort),
-			}, map[string][]string{"sort": {"sort"}}, "page", "page"), nil, flagAll, "page", "page", "", 0, "", "", "data", cmd.ErrOrStderr())
+			}, map[string][]string{"sort": {"sort"}}, "page", "page"), nil, flagAll, "page[number]", "page", "page[size]", 50, "", "", "data", cmd.ErrOrStderr())
 			if err != nil {
 				return classifyAPIError(cmd.OutOrStdout(), err, flags)
 			}

@@ -32,7 +32,7 @@ func newV10dlcGetPartnerCampaignsSharedByUserCmd(flags *rootFlags) *cobra.Comman
 			data, prov, err := resolvePaginatedReadWithStrategy(cmd.Context(), c, flags, "auto", "10dlc", path, retainCLIQueryParams(cmd, map[string]string{
 				"page":           formatCLIParamValue(flagPage),
 				"recordsPerPage": formatCLIParamValue(flagRecordsPerPage),
-			}, map[string][]string{"page": {"page"}, "recordsPerPage": {"records-per-page"}}, "page", "page"), nil, flagAll, "page", "page", "", 0, "", "", "records", cmd.ErrOrStderr())
+			}, map[string][]string{"page": {"page"}, "recordsPerPage": {"records-per-page"}}, "page", "page"), nil, flagAll, "page", "page", "recordsPerPage", 100, "", "", "records", cmd.ErrOrStderr())
 			if err != nil {
 				return classifyAPIError(cmd.OutOrStdout(), err, flags)
 			}
