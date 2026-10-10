@@ -18,7 +18,7 @@
     "type": "bearer_token",
     "api_key_available": true
   },
-  "source_fingerprint": "ba12f292b22fae9b31ba491a9ddd464edc86d47263364e5f91418e3d99001bae",
+  "source_fingerprint": "425de6cfd6f6d4b9fed06dd820cec741318e37f8da86724142e3965106dfe8d7",
   "source_files": {
     "cmd/neon-pp-cli/main.go": "5a05f96cb11eb3856bc079c3b6d5606765cff967dca9429ce7c32ed9900dea9d",
     "cmd/neon-pp-mcp/http_auth_test.go": "fccc2ee8b90cfebec4f4cf6a027c14fee6711fb3e40729df42178c4f304ad30c",
@@ -62,7 +62,7 @@
     "internal/cli/learnings_stats_test.go": "73dc0da48258582efa58b8062fe9720b70bc4d34f4fa425b30d67d99ed5fa6ba",
     "internal/cli/neon_commands_test.go": "669c9e62ea9d1bf6cb48a1aa08865f8d2d96bbdba529df5d6bd89c1dd073dee5",
     "internal/cli/neon_connection_string.go": "2cf7ff73b1b647e33e53042007e422b4b45ffd2edefe00699c982b4088c31566",
-    "internal/cli/neon_consumption.go": "40331db496c5b6cece5c47a6a29f09f5749d2644ebbbbfffa05b7d1fbaacc07e",
+    "internal/cli/neon_consumption.go": "a07deae035d76246f094cb92c6f52ac8b8d922433909fc287f734d08a59c4a8f",
     "internal/cli/neon_context.go": "5e609a391a578d7f5ff65ec05aae52d0e260fbd6863d9513b76a4aeefe584a22",
     "internal/cli/neon_context_test.go": "69d2b9fa808e4622f1ebdeb787ba7cb3c59b834eec7f390700c8b9c86caa15fc",
     "internal/cli/neon_errors.go": "2f0f3a28c635e40ba445fc08f460e244dc19c9294325c4c020678b97e5df0265",
@@ -73,7 +73,7 @@
     "internal/cli/neon_sync_extra_test.go": "d67089d51f67ec831ae7deab56e84e4eca842cfaa9fc7fc444bf73c7cdf2c473",
     "internal/cli/neon_tail_examples.go": "f9129bbf4b4ff07973d1ffe6d70bf9bb3806ff65c84e979c01c8b304a9300529",
     "internal/cli/neon_usage_snapshots.go": "b42629d2cb78c398b01e30cab6b7528d307957f5a789bcfc8d16fac9ea69ce9f",
-    "internal/cli/neon_usage_snapshots_test.go": "a785fc6bf765debef4e508b1f747da64366f2b5b3da0b4e455dfbee0709b5be4",
+    "internal/cli/neon_usage_snapshots_test.go": "7a5e3089e144ec5dc09e674e6b4757b82e2cb214fa8982f7675f3a4d84f11063",
     "internal/cli/organizations_api-keys.go": "ad97d1c5e9f2adce05a86ec5023065775a5a79cb3ee2f9c4bd5422a4c04fb5d2",
     "internal/cli/organizations_api-keys_create-org.go": "0c28264425cca126b36a82ddc40554aa9ec65fdf40540a62c43a1b2a8e30fe61",
     "internal/cli/organizations_api-keys_list-org.go": "c611d8b717626a4e42b4a76cc8dfab243d22322aaaa56fbdbd8f0ba0c8762ad9",

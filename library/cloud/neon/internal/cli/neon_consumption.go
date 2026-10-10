@@ -269,6 +269,11 @@ func storageRankPoints(db *store.Store) ([]neonUsagePoint, error) {
 		return nil, err
 	}
 	if len(snaps) > 0 {
+		// A storage reading belongs to the moment its snapshot was taken, not
+		// to the interval since the previous sync, so window it by End.
+		for i := range snaps {
+			snaps[i].Start = snaps[i].End
+		}
 		return snaps, nil
 	}
 	return consumptionPoints(db)

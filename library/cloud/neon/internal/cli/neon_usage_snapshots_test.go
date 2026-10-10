@@ -187,3 +187,22 @@ func TestNeonStorageRanksOnOneMeasurement(t *testing.T) {
 		t.Fatalf("both projects ranked on snapshot bytes: %+v", ranked)
 	}
 }
+
+func TestNeonStorageKeepsFreshReadingAfterGap(t *testing.T) {
+	db := seedSnapshotStore(t, map[string]float64{"p": 1})
+	now := time.Now().UTC()
+	if err := recordNeonUsageSnapshot(context.Background(), db, now.Add(-10*24*time.Hour)); err != nil {
+		t.Fatal(err)
+	}
+	if err := recordNeonUsageSnapshot(context.Background(), db, now); err != nil {
+		t.Fatal(err)
+	}
+	points, err := storageRankPoints(db)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ranked := rankNeonUsage(points, "storage", now.Add(-7*24*time.Hour), now.Add(time.Minute))
+	if len(ranked) != 1 || ranked[0].Value != 100 {
+		t.Fatalf("today's storage reading must count in a 7d window: %+v", ranked)
+	}
+}
