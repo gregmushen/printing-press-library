@@ -72,18 +72,7 @@ func newOrdersGetCmd(flags *rootFlags) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			type safeItem struct {
-				Description string  `json:"description"`
-				Quantity    float64 `json:"quantity"`
-				Total       float64 `json:"total"`
-			}
-			items := make([]safeItem, 0)
-			for _, group := range detail.FulfillmentGroups {
-				for _, item := range group.LineItems {
-					items = append(items, safeItem{item.Description, item.CurrentQuantity - item.CancelledQuantity, item.TotalPrice})
-				}
-			}
-			return flags.printJSON(cmd, map[string]any{"reference": o.reference(), "date": detail.SalesDate, "status": detail.StatusDescription, "subtotal": detail.SubTotalAmount, "tax": detail.TaxTotalAmount, "total": detail.GrandTotalAmount, "items": items})
+			return printHomeDepotOrderDetail(cmd, flags, o, detail)
 		}
 		return notFoundErr(fmt.Errorf("order was not found in the requested history range; use --from and --to to change the range"))
 	}}
@@ -91,4 +80,19 @@ func newOrdersGetCmd(flags *rootFlags) *cobra.Command {
 	cmd.Flags().StringVar(&to, "to", "", "End date YYYY-MM-DD (default today)")
 	cmd.Flags().IntVar(&maxPages, "max-scan-pages", 50, "Maximum history pages to scan")
 	return cmd
+}
+
+func printHomeDepotOrderDetail(cmd *cobra.Command, flags *rootFlags, o observedOrderSummary, detail observedOrderDetail) error {
+	type safeItem struct {
+		Description string  `json:"description"`
+		Quantity    float64 `json:"quantity"`
+		Total       float64 `json:"total"`
+	}
+	items := make([]safeItem, 0)
+	for _, group := range detail.FulfillmentGroups {
+		for _, item := range group.LineItems {
+			items = append(items, safeItem{item.Description, item.CurrentQuantity - item.CancelledQuantity, item.TotalPrice})
+		}
+	}
+	return printJSONFilteredKeep(cmd.OutOrStdout(), map[string]any{"reference": o.reference(), "date": detail.SalesDate, "status": detail.StatusDescription, "subtotal": detail.SubTotalAmount, "tax": detail.TaxTotalAmount, "total": detail.GrandTotalAmount, "items": items}, flags, "description")
 }

@@ -225,3 +225,7 @@ The public-library documentation verifier required explicit final auth registrat
 ### Final publish gate after browser refresh
 
 The browser session refresh cleared the temporary search security page. The CLI returned five actual products, then the final full live matrix passed 110/110 checks, with 0 failures and 103 explicitly skipped/unverified cases. The runner refreshed the acceptance marker for the corrected registration source, and embedded and archived copies were synchronized. Public-library verify-skill passed with no errors or likely false positives; final scoped Go tests and vet passed. No additional cart mutation or order placement occurred.
+
+### Public review corrections
+
+Compact and agent order output now explicitly retains each item description. The synthetic regression failed before the correction and passed afterward; read-only live checks confirmed preserved descriptions for both online and in-store order details (1 and 4 items respectively), without publishing identifiers or response bodies. Browser-cookie reads now use the shared platform credential permission guard: POSIX file modes and Windows owner/DACL validation. Native macOS permission tests pass; the Windows test executable cross-compiles, but native Windows ACL execution was not available on this host. Full scoped Go tests and vet passed. Full live dogfood reran after both source corrections: 110 passed, 0 failed, 103 explicitly skipped/unverified cases. The current runner marker is synchronized in embedded and archived manuscripts.

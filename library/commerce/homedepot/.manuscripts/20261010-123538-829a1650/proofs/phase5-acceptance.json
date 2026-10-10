@@ -12,7 +12,7 @@
     "type": "cookie",
     "api_key_available": true
   },
-  "source_fingerprint": "87e6a7c00baffc1559d62daee4f0343cb3ac3693770374ffeee6e7707ade9815",
+  "source_fingerprint": "3d315edbccb09b632c335f9286b9b02980ce53f6ce0edfffc1ead0cd552ca447",
   "source_files": {
     "cmd/homedepot-pp-cli/main.go": "2aa3db859d798acc10ba60148ed0493ed27620391f83304fe3ab4abe163b146b",
     "cmd/homedepot-pp-mcp/http_auth_test.go": "7817fc07b1911bd597c2cacb468c1e1530a277c2c9710cf520be45659767b5c5",
@@ -50,10 +50,10 @@
     "internal/cli/novel_homedepot_cart_show.go": "fb45773b9fa85751054c2780df501bc40ef45d8d5a1f9c2c7907ef18b62f955e",
     "internal/cli/novel_homedepot_commands.go": "02a877e15906bab08691b62f2386395920488ba30957a92e5e36ae466a01b458",
     "internal/cli/novel_homedepot_errors.go": "04ad01d6d0666f9d9aeb9e2074c611da5d24e9eb6d7066c338068e8211b2b99b",
-    "internal/cli/novel_homedepot_order_commands.go": "86ab6dcc747ed502f40d394106c8c67a7f0853ca74e93588be6c3734f645cf03",
+    "internal/cli/novel_homedepot_order_commands.go": "22015b408743cd7d5403a3b0a3873c06d152e2e1caacdd74b0691741f5487f39",
     "internal/cli/novel_homedepot_orders_live.go": "ad3054b6d6e2bb77da0d1fb7e4018f744a261888e7a8e4daf65be217965edee9",
-    "internal/cli/novel_homedepot_session.go": "ea75350963ee1df20c3d60d7e9e3e22342ea713450f9422d356c29659b7e1258",
-    "internal/cli/novel_homedepot_test.go": "d56d30534ae135b0d948944d54db4a6eadb003dc0fc2b9a16e20a471af180a2c",
+    "internal/cli/novel_homedepot_session.go": "dd998256dfea8d6d8b5b0610957d36cb34a71c9113f655d4da43edb4c0d32fbc",
+    "internal/cli/novel_homedepot_test.go": "76d68779470001b3c4a105fa66a91843b937c49340fcf01f18302058faaeffac",
     "internal/cli/oms.go": "a9918699739435e57402b29557629dd516b3e6a4d8a504bc756a531567d73ed8",
     "internal/cli/oms_get_order_details.go": "736c2f2252ef95f3004e1ec3806f5835b5ba18164f16eea81a7597503f1af066",
     "internal/cli/oms_list_order_history.go": "078db40bffe3367a38ffda1c4b471a9b9471764be3369ce3189d7ad8d2acecc8",

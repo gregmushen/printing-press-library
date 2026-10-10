@@ -134,7 +134,7 @@ Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_
 
 ## Authentication
 
-Sign in to homedepot.com in Safari, then run homedepot-pp-cli auth import. For Chrome, run homedepot-pp-cli auth login --chrome. Session cookies preserve domain, path and expiry in a private 0600 local file at ~/.local/share/homedepot-pp-cli/cookies.json, or the directory selected by --home. An absolute HOMEDEPOT_COOKIE_FILE selects another private file. Imports verify a protected request before replacing the stored session. Run homedepot-pp-cli auth status --verify for a live check; auth logout removes the stored session. No developer API key is needed.
+Sign in to homedepot.com in Safari, then run homedepot-pp-cli auth import. For Chrome, run homedepot-pp-cli auth login --chrome. Session cookies preserve domain, path and expiry in a private local file (0600 on POSIX; owner-only ACL on Windows) at ~/.local/share/homedepot-pp-cli/cookies.json, or the directory selected by --home. An absolute HOMEDEPOT_COOKIE_FILE selects another private file. Imports verify a protected request before replacing the stored session. Run homedepot-pp-cli auth status --verify for a live check; auth logout removes the stored session. No developer API key is needed.
 
 ## Quick Start
 

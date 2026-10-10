@@ -1,11 +1,15 @@
 package cli
 
 import (
+	"bytes"
 	"encoding/base64"
 	"encoding/json"
 	"github.com/mvanhorn/printing-press-library/library/commerce/homedepot/internal/client"
+	"github.com/spf13/cobra"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -67,14 +71,27 @@ func TestHomeDepotPrivateCookieFile(t *testing.T) {
 	if err := os.WriteFile(path, data, 0600); err != nil {
 		t.Fatal(err)
 	}
+	if runtime.GOOS == "windows" {
+		if out, err := exec.Command("icacls", path, "/inheritance:r", "/grant:r", os.Getenv("USERNAME")+":F").CombinedOutput(); err != nil {
+			t.Skipf("cannot set an owner-only test ACL: %v %s", err, out)
+		}
+	}
 	if _, err := readHomeDepotCookies(path, true); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.Chmod(path, 0644); err != nil {
+	if runtime.GOOS == "windows" {
+		// NTFS privacy is an ACL property; mode bits do not represent it.
+		if out, err := exec.Command("icacls", path, "/grant", "*S-1-5-32-545:R").CombinedOutput(); err != nil {
+			t.Skipf("cannot set a broad test ACL: %v %s", err, out)
+		}
+	} else if err := os.Chmod(path, 0644); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := readHomeDepotCookies(path, true); err == nil {
 		t.Fatal("public cookie file accepted")
+	}
+	if runtime.GOOS == "windows" {
+		return // Windows symlink creation needs a privilege not required by this CLI.
 	}
 	link := filepath.Join(t.TempDir(), "link.json")
 	if err := os.Symlink(path, link); err != nil {
@@ -255,5 +272,29 @@ func TestHomeDepotCookiePathScope(t *testing.T) {
 		if homeDepotCookiePathInScope(path) {
 			t.Fatalf("unrelated scope included: %s", path)
 		}
+	}
+}
+
+func TestHomeDepotOrderItemNamesSurviveCompactOutput(t *testing.T) {
+	var detail observedOrderDetail
+	if err := json.Unmarshal([]byte(`{"userId":"sample-user-private","customerAccountId":"sample-account-private","grandTotalAmount":4.50,"fulfillmentGroups":[{"lineItems":[{"description":"Sample pencil pack","currentQuantity":2,"cancelledQuantity":0,"totalPrice":4.50}]}]}`), &detail); err != nil {
+		t.Fatal(err)
+	}
+	for _, mode := range []string{"json", "compact", "agent"} {
+		t.Run(mode, func(t *testing.T) {
+			flags := &rootFlags{asJSON: true, compact: mode != "json", agent: mode == "agent", agentSource: "live"}
+			cmd := &cobra.Command{Use: "get"}
+			var out bytes.Buffer
+			cmd.SetOut(&out)
+			if err := printHomeDepotOrderDetail(cmd, flags, observedOrderSummary{OrderOrigin: "online", OrderNumber: "sample-order"}, detail); err != nil {
+				t.Fatal(err)
+			}
+			if !strings.Contains(out.String(), `"description":"Sample pencil pack"`) && !strings.Contains(out.String(), `"description": "Sample pencil pack"`) {
+				t.Fatalf("product description was dropped in %s output", mode)
+			}
+			if strings.Contains(out.String(), "sample-user-private") || strings.Contains(out.String(), "sample-account-private") {
+				t.Fatal("private identity fields leaked into order output")
+			}
+		})
 	}
 }

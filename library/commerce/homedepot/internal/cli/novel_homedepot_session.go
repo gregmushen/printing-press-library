@@ -93,8 +93,10 @@ func readHomeDepotCookies(path string, private bool) ([]homeDepotCookie, error) 
 	if !info.Mode().IsRegular() {
 		return nil, fmt.Errorf("cookie file must be a regular file")
 	}
-	if private && info.Mode().Perm()&0077 != 0 {
-		return nil, fmt.Errorf("cookie file must be private: chmod 600 %s", path)
+	if private {
+		if err := cliutil.VerifyCredsPerms(path); err != nil {
+			return nil, fmt.Errorf("cookie file must be private: %w", err)
+		}
 	}
 	data, err := os.ReadFile(filepath.Clean(path))
 	if err != nil {
