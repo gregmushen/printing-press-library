@@ -36,7 +36,11 @@ func newNovelUsageTopCmd(flags *rootFlags) *cobra.Command {
 		if db != nil {
 			defer db.Close()
 		}
-		points, err := consumptionPoints(db)
+		pointsFor := consumptionPoints
+		if metric == "storage" {
+			pointsFor = storageRankPoints
+		}
+		points, err := pointsFor(db)
 		if err != nil {
 			return err
 		}

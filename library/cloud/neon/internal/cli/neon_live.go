@@ -126,15 +126,7 @@ func waitNeonOperations(ctx context.Context, c *client.Client, project, branch s
 				operations = append(operations, env.Operation)
 			}
 		} else {
-			// Operations are returned newest first and the API ignores any
-			// branch filter, so page until operations are older than the
-			// lookback window (an operation running longer than that is not
-			// expected) or the list ends.
-			var err error
-			operations, err = neonRecentOperations(ctx, c, project, started.Add(-neonOperationLookback))
-			if err != nil {
-				return neonWaitError(err)
-			}
+			return waitNeonUntracked(ctx, c, project, branch, started, interval)
 		}
 		pending := false
 		for _, op := range operations {
@@ -282,17 +274,14 @@ func neonBranchLastActive(ctx context.Context, c *client.Client, project, branch
 	return last, nil
 }
 
-// neonOperationLookback bounds how far back wait pages through operations.
-const neonOperationLookback = 24 * time.Hour
-
-// neonRecentOperations returns every operation created at or after since,
-// following pagination (newest first) and stopping once a page reaches older
-// operations or the list ends.
-func neonRecentOperations(ctx context.Context, c *client.Client, project string, since time.Time) ([]neonObject, error) {
+// neonOperationsUntil walks project operations newest first, following every
+// cursor, and stops early only when stop returns true for an operation (that
+// operation is not included). Neon ignores branch filters on this endpoint.
+func neonOperationsUntil(ctx context.Context, c *client.Client, project string, stop func(neonObject) bool) ([]neonObject, error) {
 	out := make([]neonObject, 0)
 	query := map[string]string{"limit": "100"}
 	seen := map[string]bool{}
-	for page := 0; page < 50; page++ {
+	for {
 		raw, err := c.GetNoCache(ctx, neonProjectPath(project)+"/operations", query)
 		if err != nil {
 			return nil, err
@@ -306,22 +295,94 @@ func neonRecentOperations(ctx context.Context, c *client.Client, project string,
 		if err := json.Unmarshal(raw, &env); err != nil {
 			return nil, err
 		}
-		reachedOld := false
 		for _, op := range env.Operations {
-			if t, ok := parseRestSyncTimestamp(ns(op, "created_at")); ok && t.Before(since) {
-				reachedOld = true
-				continue
+			if stop != nil && stop(op) {
+				return out, nil
 			}
 			out = append(out, op)
 		}
 		next := env.Pagination.Cursor
-		if reachedOld || len(env.Operations) == 0 || next == "" || seen[next] {
+		if len(env.Operations) == 0 || next == "" || seen[next] {
 			return out, nil
 		}
 		seen[next] = true
 		query["cursor"] = next
 	}
-	return out, nil
+}
+
+// neonRecentOperations returns every operation created at or after since.
+func neonRecentOperations(ctx context.Context, c *client.Client, project string, since time.Time) ([]neonObject, error) {
+	return neonOperationsUntil(ctx, c, project, func(op neonObject) bool {
+		t, ok := parseRestSyncTimestamp(ns(op, "created_at"))
+		return ok && t.Before(since)
+	})
+}
+
+// waitNeonUntracked waits for a branch (or, with branch "", a whole project)
+// to have no in-flight operations. The first pass walks the full operation
+// history; later passes re-check tracked operations by ID and read only the
+// new operations at the head of the list, so no page is ever skipped.
+func waitNeonUntracked(ctx context.Context, c *client.Client, project, branch string, started time.Time, interval time.Duration) error {
+	known := map[string]bool{}
+	tracked := map[string]bool{}
+	first := true
+	for {
+		var ops []neonObject
+		var err error
+		if first {
+			ops, err = neonOperationsUntil(ctx, c, project, nil)
+			first = false
+		} else {
+			ops, err = neonOperationsUntil(ctx, c, project, func(op neonObject) bool { return known[ns(op, "id")] })
+		}
+		if err != nil {
+			return neonWaitError(err)
+		}
+		for _, op := range ops {
+			id := ns(op, "id")
+			known[id] = true
+			if branch != "" && ns(op, "branch_id") != "" && ns(op, "branch_id") != branch {
+				continue
+			}
+			switch ns(op, "status") {
+			case "running", "scheduling", "cancelling":
+				tracked[id] = true
+			case "failed", "error", "cancelled":
+				// Old failures in history must not fail the wait.
+				if neonOpStartedSince(op, started) {
+					return &cliError{code: 6, err: fmt.Errorf("operation %s %s: %s", id, ns(op, "status"), ns(op, "error"))}
+				}
+			}
+		}
+		for id := range tracked {
+			raw, err := c.GetNoCache(ctx, replacePathParam(neonProjectPath(project)+"/operations/{operation_id}", "operation_id", id), nil)
+			if err != nil {
+				return neonWaitError(err)
+			}
+			var env struct {
+				Operation neonObject `json:"operation"`
+			}
+			if err := json.Unmarshal(raw, &env); err != nil {
+				return err
+			}
+			switch ns(env.Operation, "status") {
+			case "finished", "skipped":
+				delete(tracked, id)
+			case "failed", "error", "cancelled":
+				return &cliError{code: 6, err: fmt.Errorf("operation %s %s: %s", id, ns(env.Operation, "status"), ns(env.Operation, "error"))}
+			}
+		}
+		if len(tracked) == 0 {
+			return nil
+		}
+		timer := time.NewTimer(interval)
+		select {
+		case <-ctx.Done():
+			timer.Stop()
+			return neonWaitError(ctx.Err())
+		case <-timer.C:
+		}
+	}
 }
 
 func neonNotFound(err error) bool {

@@ -250,3 +250,26 @@ func validateNeonMetric(metric string) error {
 	}
 	return usageErr(fmt.Errorf("--metric must be compute, storage, transfer or written"))
 }
+
+// storageRankPoints returns points for ranking storage on one measurement.
+// History reports byte-months while snapshots report current bytes, so they
+// must not be mixed: every sync snapshots every project, so rank on snapshots
+// when any exist and fall back to history only when none do.
+func storageRankPoints(db *store.Store) ([]neonUsagePoint, error) {
+	projects, err := neonRows(db, "projects")
+	if err != nil {
+		return nil, err
+	}
+	names := map[string]string{}
+	for _, p := range projects {
+		names[ns(p, "id")] = ns(p, "name")
+	}
+	snaps, err := snapshotPoints(db, names)
+	if err != nil {
+		return nil, err
+	}
+	if len(snaps) > 0 {
+		return snaps, nil
+	}
+	return consumptionPoints(db)
+}

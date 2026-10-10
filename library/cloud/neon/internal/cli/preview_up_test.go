@@ -159,8 +159,8 @@ func TestNeonPreviewUpConflictWaitsOnlyOnThisBranch(t *testing.T) {
 					}
 					fmt.Fprintf(w, `{"operations":[
 						{"id":"elsewhere","branch_id":"other","status":"running","created_at":"2026-10-10T12:00:01Z"},
-						{"id":"old","branch_id":"b","status":"failed","created_at":"2026-10-01T00:00:00Z"},
-						{"id":"mine","branch_id":"b","status":%q,"created_at":"2026-10-10T12:00:00Z"}]}`, mine)
+						{"id":"mine","branch_id":"b","status":%q,"created_at":"2026-10-10T12:00:00Z"},
+						{"id":"old","branch_id":"b","status":"failed","created_at":"2026-10-01T00:00:00Z"}]}`, mine)
 				case strings.HasSuffix(r.URL.Path, "/databases"):
 					fmt.Fprint(w, `{"databases":[{"name":"neondb","owner_name":"neondb_owner"}]}`)
 				case strings.HasSuffix(r.URL.Path, "/connection_uri"):

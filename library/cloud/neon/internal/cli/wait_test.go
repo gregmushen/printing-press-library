@@ -7,7 +7,6 @@ package cli
 import (
 	"fmt"
 	"net/http"
-	"time"
 
 	"bytes"
 	"strings"
@@ -55,6 +54,13 @@ func TestNeonWaitPollingTypedFailures(t *testing.T) {
 				if tc.name == "failed" && polls >= 2 {
 					status = "failed" // seen running first, then failed during this wait
 				}
+				if strings.Contains(r.URL.Path, "/operations/") {
+					if tc.name == "finish" && polls >= 2 {
+						status = "finished"
+					}
+					fmt.Fprintf(w, `{"operation":{"id":"op","branch_id":"b","status":%q}}`, status)
+					return
+				}
 				if tc.name == "finish" && polls >= 2 {
 					status = "finished"
 				}
@@ -90,6 +96,10 @@ func TestNeonWaitAllProjects(t *testing.T) {
 			if polls > 1 {
 				status = "finished"
 			}
+			if strings.Contains(r.URL.Path, "/operations/") {
+				fmt.Fprintf(w, `{"operation":{"id":"op","branch_id":"any","status":%q}}`, status)
+				return
+			}
 			fmt.Fprintf(w, `{"operations":[{"id":"op","branch_id":"any","status":%q}]}`, status)
 		}
 	})
@@ -105,29 +115,39 @@ func TestNeonWaitAllProjects(t *testing.T) {
 	}
 }
 
-func TestNeonWaitPagesPastOtherBranches(t *testing.T) {
-	polls := 0
-	now := time.Now().UTC().Format(time.RFC3339)
+func TestNeonWaitWalksFullHistoryThenTracksByID(t *testing.T) {
+	listCalls, gets := 0, 0
+	old := "2026-01-01T00:00:00Z"
 	neonTestServer(t, func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/projects/p/branches" {
+		switch {
+		case r.URL.Path == "/projects/p/branches":
 			fmt.Fprint(w, `{"branches":[{"id":"b","name":"preview"}]}`)
-			return
+		case r.URL.Path == "/projects/p/operations/deep":
+			gets++
+			status := "running"
+			if gets >= 2 {
+				status = "finished"
+			}
+			fmt.Fprintf(w, `{"operation":{"id":"deep","branch_id":"b","status":%q}}`, status)
+		case r.URL.Path == "/projects/p/operations":
+			listCalls++
+			switch r.URL.Query().Get("cursor") {
+			case "":
+				fmt.Fprintf(w, `{"operations":[{"id":"o1","branch_id":"other","status":"finished","created_at":%q}],"pagination":{"cursor":"c2"}}`, old)
+			case "c2":
+				// A long-running operation far down the list, older than any lookback.
+				fmt.Fprintf(w, `{"operations":[{"id":"deep","branch_id":"b","status":"running","created_at":%q}],"pagination":{"cursor":"c3"}}`, old)
+			default:
+				fmt.Fprint(w, `{"operations":[],"pagination":{"cursor":"c3"}}`)
+			}
+		default:
+			t.Errorf("unexpected %s", r.URL)
 		}
-		if r.URL.Query().Get("cursor") == "" {
-			polls++
-			fmt.Fprintf(w, `{"operations":[{"id":"x","branch_id":"other","status":"finished","created_at":%q}],"pagination":{"cursor":"p2"}}`, now)
-			return
-		}
-		status := "running"
-		if polls >= 2 {
-			status = "finished"
-		}
-		fmt.Fprintf(w, `{"operations":[{"id":"mine","branch_id":"b","status":%q,"created_at":%q}],"pagination":{"cursor":"p3"}}`, status, now)
 	})
 	if _, err := executeNeon(t, newNovelWaitCmd, "--project-id", "p", "--branch", "preview", "--timeout", "1s", "--interval", "2ms"); err != nil {
 		t.Fatal(err)
 	}
-	if polls < 2 {
-		t.Fatalf("wait returned before the second-page operation finished (polls=%d)", polls)
+	if gets < 2 {
+		t.Fatalf("deep running operation was not tracked to completion (gets=%d)", gets)
 	}
 }

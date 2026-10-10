@@ -161,3 +161,29 @@ func TestNeonUsageChoosesSourcePerProject(t *testing.T) {
 		t.Fatalf("free project must fall back to snapshots: %v", sources["free"])
 	}
 }
+
+func TestNeonStorageRanksOnOneMeasurement(t *testing.T) {
+	db := seedSnapshotStore(t, map[string]float64{"paid": 5, "free": 70})
+	now := time.Now().UTC()
+	if err := recordNeonUsageSnapshot(context.Background(), db, now); err != nil {
+		t.Fatal(err)
+	}
+	// Byte-month history for "paid" must not be compared with snapshot bytes.
+	hist, _ := json.Marshal(map[string]any{"id": "h1", "project_id": "paid", "timeframe_start": now.Format(time.RFC3339), "timeframe_end": now.Format(time.RFC3339), "storage": 9e12})
+	if err := db.Upsert("consumption-history-projects", "h1", hist); err != nil {
+		t.Fatal(err)
+	}
+	points, err := storageRankPoints(db)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, p := range points {
+		if p.Basis == "" {
+			t.Fatalf("storage ranking used a history point: %+v", p)
+		}
+	}
+	ranked := rankNeonUsage(points, "storage", now.Add(-time.Hour), now.Add(time.Hour))
+	if len(ranked) != 2 || ranked[0].Value != 100 || ranked[1].Value != 100 {
+		t.Fatalf("both projects ranked on snapshot bytes: %+v", ranked)
+	}
+}
