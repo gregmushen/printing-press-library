@@ -36,12 +36,17 @@ func newVerifyProfilesListProfilesCmd(flags *rootFlags) *cobra.Command {
 				}
 			}
 			if flagPage != "" {
-				path, err = appendDeepObjectQueryParam(path, "page", flagPage)
+				pagePath, err := appendDeepObjectQueryParam(path, "page", flagPage)
 				if err != nil {
 					return err
 				}
+				// Under --all the start page/size go to the paging loop instead of
+				// the fixed path, so it advances from the requested page.
+				if !flagAll {
+					path = pagePath
+				}
 			}
-			data, prov, err := resolvePaginatedReadWithStrategy(cmd.Context(), c, flags, "auto", "verify-profiles", path, retainCLIQueryParams(cmd, map[string]string{}, map[string][]string{}, "page", "page"), nil, flagAll, "page[number]", "page", "page[size]", 50, "", "", "data", cmd.ErrOrStderr())
+			data, prov, err := resolvePaginatedReadWithStrategy(cmd.Context(), c, flags, "auto", "verify-profiles", path, withAllPageParams(flagAll, flagPage, retainCLIQueryParams(cmd, map[string]string{}, map[string][]string{}, "page", "page")), nil, flagAll, "page[number]", "page", "page[size]", 50, "", "", "data", cmd.ErrOrStderr())
 			if err != nil {
 				return classifyAPIError(cmd.OutOrStdout(), err, flags)
 			}

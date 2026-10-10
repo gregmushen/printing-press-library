@@ -51,12 +51,16 @@ func newMessagingProfilesShortCodesListProfileCmd(flags *rootFlags) *cobra.Comma
 				return err
 			}
 			if flagPage != "" {
-				path, err = appendDeepObjectQueryParam(path, "page", flagPage)
+				pagePath, err := appendDeepObjectQueryParam(path, "page", flagPage)
 				if err != nil {
 					return err
 				}
+				// Under --all the start page/size go to the paging loop instead.
+				if !flagAll {
+					path = pagePath
+				}
 			}
-			data, prov, err := resolvePaginatedReadWithStrategy(cmd.Context(), c, flags, "live", "short-codes", path, retainCLIQueryParams(cmd, map[string]string{}, map[string][]string{}, "page", "page"), nil, flagAll, "page[number]", "page", "page[size]", 50, "", "", "data", cmd.ErrOrStderr())
+			data, prov, err := resolvePaginatedReadWithStrategy(cmd.Context(), c, flags, "live", "short-codes", path, withAllPageParams(flagAll, flagPage, retainCLIQueryParams(cmd, map[string]string{}, map[string][]string{}, "page", "page")), nil, flagAll, "page[number]", "page", "page[size]", 50, "", "", "data", cmd.ErrOrStderr())
 			if err != nil {
 				return classifyAPIError(cmd.OutOrStdout(), err, flags)
 			}

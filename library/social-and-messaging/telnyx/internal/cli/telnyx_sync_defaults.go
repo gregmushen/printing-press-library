@@ -47,3 +47,26 @@ func withDefaultRecordType(raw string) string {
 	}
 	return string(b)
 }
+
+// withAllPageParams moves a --page JSON object ({"number":3,"size":20}) into
+// the paging loop's page[number]/page[size] params when --all is set, so the
+// loop starts from the requested page instead of page 1 with the page
+// embedded in a fixed path. Without --all, params are returned unchanged.
+func withAllPageParams(fetchAll bool, rawPage string, params map[string]string) map[string]string {
+	if !fetchAll || rawPage == "" {
+		return params
+	}
+	var page map[string]any
+	if err := json.Unmarshal([]byte(rawPage), &page); err != nil || page == nil {
+		return params
+	}
+	if params == nil {
+		params = map[string]string{}
+	}
+	for field, key := range map[string]string{"number": "page[number]", "size": "page[size]"} {
+		if v, ok := page[field]; ok && v != nil {
+			params[key] = formatCLIParamValue(v)
+		}
+	}
+	return params
+}

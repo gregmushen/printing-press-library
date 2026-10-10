@@ -198,3 +198,13 @@ func TestWithDefaultRecordTypeNullFilter(t *testing.T) {
 		}
 	}
 }
+
+func TestWithAllPageParamsStartsFromRequestedPage(t *testing.T) {
+	got := withAllPageParams(true, `{"number":3,"size":20}`, map[string]string{"sort": "x"})
+	if got["page[number]"] != "3" || got["page[size]"] != "20" || got["sort"] != "x" {
+		t.Fatalf("unexpected params: %v", got)
+	}
+	if got := withAllPageParams(false, `{"number":3}`, map[string]string{}); len(got) != 0 {
+		t.Fatalf("without --all params must be unchanged, got %v", got)
+	}
+}
