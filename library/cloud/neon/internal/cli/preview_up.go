@@ -70,19 +70,12 @@ func newNovelPreviewUpCmd(flags *rootFlags) *cobra.Command {
 				raw = nil
 				// Wait on the other run's in-flight or failed operations by ID so a
 				// failed create is reported instead of returning a broken branch.
-				opsRaw, err := c.GetNoCache(ctx, neonProjectPath(project)+"/operations", map[string]string{"branch_id": ns(branch, "id"), "limit": "10"})
+				createdAt, _ := parseRestSyncTimestamp(ns(branch, "created_at"))
+				recent, err := neonRecentOperations(ctx, c, project, createdAt)
 				if err != nil {
 					return err
 				}
-				var ops struct {
-					Operations []neonObject `json:"operations"`
-				}
-				if err := json.Unmarshal(opsRaw, &ops); err != nil {
-					return err
-				}
-				// The API may ignore branch_id, so filter here: only this
-				// branch's operations since it was created (the other run's create).
-				createdAt, _ := parseRestSyncTimestamp(ns(branch, "created_at"))
+				ops := struct{ Operations []neonObject }{recent}
 				for _, op := range ops.Operations {
 					if ns(op, "branch_id") != ns(branch, "id") {
 						continue

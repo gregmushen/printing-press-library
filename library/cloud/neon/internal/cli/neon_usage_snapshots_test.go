@@ -136,3 +136,28 @@ func TestNeonPlanGated(t *testing.T) {
 		t.Fatal("false positive")
 	}
 }
+
+func TestNeonUsageChoosesSourcePerProject(t *testing.T) {
+	db := seedSnapshotStore(t, map[string]float64{"paid": 5, "free": 70})
+	if err := recordNeonUsageSnapshot(context.Background(), db, time.Now().UTC()); err != nil {
+		t.Fatal(err)
+	}
+	hist, _ := json.Marshal(map[string]any{"id": "h1", "project_id": "paid", "timeframe_start": "2026-10-08T00:00:00Z", "timeframe_end": "2026-10-09T00:00:00Z", "compute_time_seconds": 900})
+	if err := db.Upsert("consumption-history-projects", "h1", hist); err != nil {
+		t.Fatal(err)
+	}
+	points, err := consumptionPoints(db)
+	if err != nil {
+		t.Fatal(err)
+	}
+	sources := map[string][]string{}
+	for _, p := range points {
+		sources[p.ProjectID] = append(sources[p.ProjectID], p.Basis)
+	}
+	if len(sources["paid"]) != 1 || sources["paid"][0] != "" {
+		t.Fatalf("paid project must use history only: %v", sources["paid"])
+	}
+	if len(sources["free"]) != 1 || sources["free"][0] == "" {
+		t.Fatalf("free project must fall back to snapshots: %v", sources["free"])
+	}
+}

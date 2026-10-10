@@ -2608,8 +2608,8 @@ func urlIDFieldName(field string) bool {
 
 func dependentResourceDefs() []dependentResourceDef {
 	return []dependentResourceDef{
-		{Name: "endpoints", ParentTable: "projects", ParentIDParam: "project_id", PathTemplate: "/projects/{project_id}/endpoints", PathParams: []dependentPathParamDef{{Param: "project_id", Field: "id"}}},
-		{Name: "branches", ParentTable: "projects", ParentIDParam: "project_id", PathTemplate: "/projects/{project_id}/branches", KeyField: "", ReconcileMode: "none", GenericScopeJSONPath: "", PathParams: []dependentPathParamDef{
+		{Name: "endpoints", ParentTable: "projects", ParentIDParam: "project_id", PathTemplate: "/projects/{project_id}/endpoints", ReconcileMode: "per_parent", GenericScopeJSONPath: "$.project_id", PathParams: []dependentPathParamDef{{Param: "project_id", Field: "id"}}},
+		{Name: "branches", ParentTable: "projects", ParentIDParam: "project_id", PathTemplate: "/projects/{project_id}/branches", KeyField: "", ReconcileMode: "per_parent", GenericScopeJSONPath: "$.project_id", PathParams: []dependentPathParamDef{
 			{Param: "project_id", Field: "id"},
 		}},
 		{Name: "operations", ParentTable: "projects", ParentIDParam: "project_id", PathTemplate: "/projects/{project_id}/operations", KeyField: "", ReconcileMode: "none", GenericScopeJSONPath: "", PathParams: []dependentPathParamDef{

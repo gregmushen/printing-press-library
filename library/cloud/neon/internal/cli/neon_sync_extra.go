@@ -106,9 +106,10 @@ func syncNeonConsumption(ctx context.Context, c neonSyncGetter, db *store.Store,
 		for {
 			raw, err := c.Get(ctx, path, query)
 			if neonPlanGated(err) {
-				result.Warn = fmt.Errorf("%s not available on this Neon plan; usage commands fall back to sync snapshots", resource)
-				fmt.Fprintf(events, "{\"event\":\"sync_warning\",\"resource\":%q,\"reason\":\"plan_gated\",\"message\":\"consumption history requires a Launch/Scale plan; usage commands use sync snapshots\"}\n", resource)
-				return result
+				// Keep going: other organizations may be on a plan with history.
+				result.Warn = fmt.Errorf("%s not available on this Neon plan for some organizations; their projects fall back to sync snapshots", resource)
+				fmt.Fprintf(events, "{\"event\":\"sync_warning\",\"resource\":%q,\"org_id\":%q,\"reason\":\"plan_gated\",\"message\":\"consumption history requires a Launch/Scale plan; usage commands use sync snapshots for this organization\"}\n", resource, org)
+				break
 			}
 			if err != nil {
 				result.Err = err

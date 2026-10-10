@@ -126,23 +126,15 @@ func waitNeonOperations(ctx context.Context, c *client.Client, project, branch s
 				operations = append(operations, env.Operation)
 			}
 		} else {
-			// Operations are returned newest first; one page covers anything
-			// still in flight without draining the branch's full history.
-			opParams := map[string]string{"limit": "50"}
-			if branch != "" {
-				opParams["branch_id"] = branch
-			}
-			raw, err := c.GetNoCache(ctx, neonProjectPath(project)+"/operations", opParams)
+			// Operations are returned newest first and the API ignores any
+			// branch filter, so page until operations are older than the
+			// lookback window (an operation running longer than that is not
+			// expected) or the list ends.
+			var err error
+			operations, err = neonRecentOperations(ctx, c, project, started.Add(-neonOperationLookback))
 			if err != nil {
 				return neonWaitError(err)
 			}
-			var env struct {
-				Operations []neonObject `json:"operations"`
-			}
-			if err := json.Unmarshal(raw, &env); err != nil {
-				return err
-			}
-			operations = env.Operations
 		}
 		pending := false
 		for _, op := range operations {
@@ -288,6 +280,48 @@ func neonBranchLastActive(ctx context.Context, c *client.Client, project, branch
 		}
 	}
 	return last, nil
+}
+
+// neonOperationLookback bounds how far back wait pages through operations.
+const neonOperationLookback = 24 * time.Hour
+
+// neonRecentOperations returns every operation created at or after since,
+// following pagination (newest first) and stopping once a page reaches older
+// operations or the list ends.
+func neonRecentOperations(ctx context.Context, c *client.Client, project string, since time.Time) ([]neonObject, error) {
+	out := make([]neonObject, 0)
+	query := map[string]string{"limit": "100"}
+	seen := map[string]bool{}
+	for page := 0; page < 50; page++ {
+		raw, err := c.GetNoCache(ctx, neonProjectPath(project)+"/operations", query)
+		if err != nil {
+			return nil, err
+		}
+		var env struct {
+			Operations []neonObject `json:"operations"`
+			Pagination struct {
+				Cursor string `json:"cursor"`
+			} `json:"pagination"`
+		}
+		if err := json.Unmarshal(raw, &env); err != nil {
+			return nil, err
+		}
+		reachedOld := false
+		for _, op := range env.Operations {
+			if t, ok := parseRestSyncTimestamp(ns(op, "created_at")); ok && t.Before(since) {
+				reachedOld = true
+				continue
+			}
+			out = append(out, op)
+		}
+		next := env.Pagination.Cursor
+		if reachedOld || len(env.Operations) == 0 || next == "" || seen[next] {
+			return out, nil
+		}
+		seen[next] = true
+		query["cursor"] = next
+	}
+	return out, nil
 }
 
 func neonNotFound(err error) bool {

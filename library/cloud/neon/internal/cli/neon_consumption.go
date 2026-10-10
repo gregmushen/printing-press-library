@@ -121,10 +121,28 @@ func consumptionPoints(db *store.Store) ([]neonUsagePoint, error) {
 	for _, p := range merged {
 		result = append(result, *p)
 	}
-	if len(result) == 0 {
-		// Plans below Launch/Scale have no consumption history; use sync snapshots.
-		return snapshotPoints(db, names)
+	// Plans below Launch/Scale have no consumption history. Choose the source
+	// per project: history when the project has any, sync snapshots otherwise,
+	// never both for the same project.
+	withHistory := map[string]bool{}
+	for _, p := range result {
+		withHistory[p.ProjectID] = true
 	}
+	snaps, err := snapshotPoints(db, names)
+	if err != nil {
+		return nil, err
+	}
+	for _, p := range snaps {
+		if !withHistory[p.ProjectID] {
+			result = append(result, p)
+		}
+	}
+	sort.SliceStable(result, func(i, j int) bool {
+		if result[i].ProjectID != result[j].ProjectID {
+			return result[i].ProjectID < result[j].ProjectID
+		}
+		return result[i].Start < result[j].Start
+	})
 	sort.Slice(result, func(i, j int) bool {
 		if result[i].ProjectID != result[j].ProjectID {
 			return result[i].ProjectID < result[j].ProjectID

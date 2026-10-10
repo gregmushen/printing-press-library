@@ -132,3 +132,33 @@ func TestNeonSyncProjectsAndEndpointsAndAncestry(t *testing.T) {
 		t.Fatal(string(raw))
 	}
 }
+
+func TestNeonSyncConsumptionContinuesPastPlanGatedOrg(t *testing.T) {
+	neonTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/projects" {
+			fmt.Fprint(w, `{"projects":[{"id":"free-p","org_id":"a-free"},{"id":"paid-p","org_id":"b-paid"}]}`)
+			return
+		}
+		if r.URL.Query().Get("org_id") == "a-free" {
+			w.WriteHeader(403)
+			fmt.Fprint(w, `{"message":"This endpoint is not available. It is included with Scale plans and above."}`)
+			return
+		}
+		fmt.Fprint(w, `{"projects":[{"project_id":"paid-p","periods":[{"consumption":[{"timeframe_start":"2026-10-08T00:00:00Z","timeframe_end":"2026-10-09T00:00:00Z","compute_time_seconds":10}]}]}]}`)
+	})
+	path := seedNeon(t, nil)
+	db, err := store.Open(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	c, err := (&rootFlags{noCache: true}).newClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+	var events bytes.Buffer
+	result := syncNeonConsumption(context.Background(), c, db, "consumption-history-projects", "", 0, nil, &events)
+	if result.Err != nil || result.Warn == nil || result.Count != 1 {
+		t.Fatalf("paid org must still sync after a gated org: %+v events=%s", result, events.String())
+	}
+}

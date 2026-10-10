@@ -7,6 +7,7 @@ package cli
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"bytes"
 	"strings"
@@ -101,5 +102,32 @@ func TestNeonWaitAllProjects(t *testing.T) {
 	}
 	if _, err := executeNeon(t, newNovelWaitCmd, "--all", "--branch", "x"); err == nil || ExitCode(err) != 2 {
 		t.Fatalf("--all with --branch must be a usage error, got %v", err)
+	}
+}
+
+func TestNeonWaitPagesPastOtherBranches(t *testing.T) {
+	polls := 0
+	now := time.Now().UTC().Format(time.RFC3339)
+	neonTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/projects/p/branches" {
+			fmt.Fprint(w, `{"branches":[{"id":"b","name":"preview"}]}`)
+			return
+		}
+		if r.URL.Query().Get("cursor") == "" {
+			polls++
+			fmt.Fprintf(w, `{"operations":[{"id":"x","branch_id":"other","status":"finished","created_at":%q}],"pagination":{"cursor":"p2"}}`, now)
+			return
+		}
+		status := "running"
+		if polls >= 2 {
+			status = "finished"
+		}
+		fmt.Fprintf(w, `{"operations":[{"id":"mine","branch_id":"b","status":%q,"created_at":%q}],"pagination":{"cursor":"p3"}}`, status, now)
+	})
+	if _, err := executeNeon(t, newNovelWaitCmd, "--project-id", "p", "--branch", "preview", "--timeout", "1s", "--interval", "2ms"); err != nil {
+		t.Fatal(err)
+	}
+	if polls < 2 {
+		t.Fatalf("wait returned before the second-page operation finished (polls=%d)", polls)
 	}
 }
