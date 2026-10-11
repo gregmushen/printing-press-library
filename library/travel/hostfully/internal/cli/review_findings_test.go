@@ -342,12 +342,27 @@ func TestFindingsFetchReconcilesAtomically(t *testing.T) {
 }
 
 func TestLiveLocalTodayUsesEachPropertyZone(t *testing.T) {
-	reg := unitRegistry{}
+	t.Setenv(timeZoneEnvVar, "")
+	reg := newUnitRegistry(map[int]string{1: "east", 2: "west"}, nil, "test")
 	reg.setPropertyTimeZones([]propertySummary{{UID: "east", TimeZone: "Pacific/Kiritimati"}, {UID: "west", TimeZone: "Pacific/Pago_Pago"}})
-	east, _ := time.LoadLocation("Pacific/Kiritimati")
-	west, _ := time.LoadLocation("Pacific/Pago_Pago")
-	now := time.Now()
-	if now.In(east).Format("2006-01-02") == now.In(west).Format("2006-01-02") {
-		t.Fatalf("fixture zones should straddle a date line")
+	unitState.mu.Lock()
+	unitState.reg = reg
+	unitState.ready = true
+	unitState.err = nil
+	unitState.mu.Unlock()
+	t.Cleanup(func() { setUnitRegistry(testUnitUIDs, "test") })
+
+	// 12:00 UTC is already the next calendar day in Kiritimati (UTC+14) but
+	// still the previous day in Pago Pago (UTC-11).
+	fixed := time.Date(2026, 3, 10, 12, 0, 0, 0, time.UTC)
+	dayFor := localTodayDayFor(func() time.Time { return fixed })
+	for uid, want := range map[string]string{"east": "2026-03-11", "west": "2026-03-10"} {
+		got, err := dayFor(uid)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got.Format("2006-01-02") != want {
+			t.Fatalf("%s: requested date %s, want %s", uid, got.Format("2006-01-02"), want)
+		}
 	}
 }

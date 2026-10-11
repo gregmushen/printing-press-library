@@ -283,13 +283,19 @@ func loadLiveReservationsForDate(flags *rootFlags, day time.Time) ([]reservation
 // that property's own current local date, so properties in different time
 // zones never share a single "today".
 func loadLiveReservationsForLocalToday(flags *rootFlags) ([]reservation, error) {
-	return loadLiveReservations(flags, func(uid string) (time.Time, error) {
+	return loadLiveReservations(flags, localTodayDayFor(time.Now))
+}
+
+// localTodayDayFor returns the per-property day selector used by live guest
+// reads: each property's current instant expressed in its own time zone.
+func localTodayDayFor(now func() time.Time) func(propertyUID string) (time.Time, error) {
+	return func(uid string) (time.Time, error) {
 		location, err := propertyLocationForUID(uid)
 		if err != nil {
 			return time.Time{}, err
 		}
-		return time.Now().In(location), nil
-	})
+		return now().In(location), nil
+	}
 }
 
 func loadLiveReservations(flags *rootFlags, dayFor func(propertyUID string) (time.Time, error)) ([]reservation, error) {
