@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"fmt"
 	"os"
 	"strings"
 
@@ -21,6 +22,24 @@ func init() {
 		addNovelCommandIfAbsent(root, newHostfullySyncCmd(flags))
 		addNovelCommandIfAbsent(root, newUnitsCmd(flags))
 		scopeSyncToAgency(root)
+		// Mock must bypass configuration, platform probes, delivery, and learning
+		// before any command-specific hooks run. Unsupported commands fail closed.
+		previous := root.PersistentPreRunE
+		root.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
+			if !mockMode() {
+				return previous(cmd, args)
+			}
+			flags.noLearn = true
+			resetUnitRegistry()
+			path := strings.TrimPrefix(cmd.CommandPath(), root.Name()+" ")
+			switch path {
+			case "whois", "guests", "availability", "today", "units", "quote", "fetch", "jobs", "jobs list",
+				"inbox", "inbox threads", "inbox show", "inbox messages", "inbox message", "inbox reply":
+				return nil
+			default:
+				return usageErr(fmt.Errorf("--mock is not supported for %s; no action performed", path))
+			}
+		}
 	})
 }
 

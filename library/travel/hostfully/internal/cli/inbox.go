@@ -123,6 +123,9 @@ func newInboxThreadsCmd(flags *rootFlags) *cobra.Command {
 }
 
 func runInboxThreads(cmd *cobra.Command, flags *rootFlags, agencyUID, leadUID string, limit int, cursor string) error {
+	if mockMode() {
+		return printMockInbox(cmd, flags)
+	}
 	c, err := newInboxClient(flags)
 	if err != nil {
 		return err
@@ -165,6 +168,9 @@ func newInboxShowCmd(flags *rootFlags) *cobra.Command {
 		Args:        cobra.ExactArgs(1),
 		Annotations: map[string]string{"mcp:read-only": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if mockMode() {
+				return printMockInbox(cmd, flags)
+			}
 			c, err := newInboxClient(flags)
 			if err != nil {
 				return err
@@ -236,6 +242,9 @@ func runInboxMessages(cmd *cobra.Command, flags *rootFlags, agencyUID, threadUID
 		if err != nil {
 			return usageErr(err)
 		}
+	}
+	if mockMode() {
+		return printMockInbox(cmd, flags)
 	}
 	c, err := newInboxClient(flags)
 	if err != nil {
@@ -312,6 +321,9 @@ func newInboxMessageCmd(flags *rootFlags) *cobra.Command {
 		Args:        cobra.ExactArgs(1),
 		Annotations: map[string]string{"mcp:read-only": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if mockMode() {
+				return printMockInbox(cmd, flags)
+			}
 			c, err := newInboxClient(flags)
 			if err != nil {
 				return err
@@ -337,7 +349,7 @@ to inspect the payload without making a request.`,
   hostfully-pp-cli inbox reply <thread-uid> "Your room is ready." --yes
   hostfully-pp-cli inbox reply <thread-uid> "Receipt attached separately." --type email --subject "Receipt" --yes`,
 		Args:        cobra.MinimumNArgs(2),
-		Annotations: map[string]string{"mcp:read-only": "false"},
+		Annotations: map[string]string{"mcp:read-only": "false", "mcp:hidden": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			threadUID := strings.TrimSpace(args[0])
 			text := strings.TrimSpace(strings.Join(args[1:], " "))
@@ -358,6 +370,9 @@ to inspect the payload without making a request.`,
 			}
 			if leadUID != "" {
 				body["leadUid"] = leadUID
+			}
+			if mockMode() {
+				return printJSONFiltered(cmd.OutOrStdout(), map[string]any{"mock": true, "would_send": true, "body": body}, flags)
 			}
 			if flags.dryRun {
 				return printJSONFiltered(cmd.OutOrStdout(), map[string]any{

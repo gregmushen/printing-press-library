@@ -59,7 +59,7 @@ func newNovelJobsListCmd(flags *rootFlags) *cobra.Command {
 	list.Flags().StringVar(&from, "from", "", "First job date (YYYY-MM-DD)")
 	list.Flags().StringVar(&to, "to", "", "Last job date (YYYY-MM-DD); maximum 90-day span")
 	list.Flags().StringVar(&properties, "property-uids", "", "Comma-separated property UIDs")
-	list.Flags().BoolVar(&mock, "mock", false, "Return a no-network example (same as the root --mock flag)")
+	list.Flags().BoolVar(&mockModeEnabled, "mock", false, "Return a no-network example (same as the root --mock flag)")
 	return list
 }
 

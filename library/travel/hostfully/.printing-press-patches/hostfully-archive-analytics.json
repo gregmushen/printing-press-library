@@ -16,6 +16,8 @@
     "internal/cli/patterns.go",
     "internal/cli/vacancy_test.go",
     "internal/cli/channels_test.go",
-    "internal/cli/turnover_test.go"
+    "internal/cli/turnover_test.go",
+    "internal/cli/calendar.go",
+    "internal/cli/review_findings_test.go"
   ]
 }

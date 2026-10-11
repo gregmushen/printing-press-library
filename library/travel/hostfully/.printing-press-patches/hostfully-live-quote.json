@@ -8,6 +8,7 @@
   "reason": "Prospective-guest pricing must match what Hostfully will charge.",
   "files": [
     "internal/cli/quote.go",
-    "internal/cli/quote_test.go"
+    "internal/cli/quote_test.go",
+    "internal/cli/review_findings_test.go"
   ]
 }

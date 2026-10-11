@@ -154,11 +154,14 @@ read-only calculation: it does not create, hold, or modify a reservation.`,
 				return usageErr(fmt.Errorf("unknown unit %d", unit))
 			}
 			request := quoteRequest{
-				AgencyUID: quoteAgencyUID(flags), LeadUID: leadUID, PropertyUID: propertyUID,
+				LeadUID: leadUID, PropertyUID: propertyUID,
 				CheckInDate: checkIn, CheckOutDate: checkOut, Guests: guests,
 				Children: children, Pets: pets,
 			}
-			if request.AgencyUID == "" {
+			if !mockMode() {
+				request.AgencyUID = quoteAgencyUID(flags)
+			}
+			if !mockMode() && request.AgencyUID == "" {
 				return usageErr(fmt.Errorf("HOSTFULLY_AGENCY_ID environment variable is required"))
 			}
 			var response quoteAPIResponse

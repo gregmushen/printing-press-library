@@ -14,13 +14,15 @@ import (
 )
 
 type turnoverGap struct {
-	Unit      int    `json:"unit"`
-	GapStart  string `json:"gap_start"`
-	GapEnd    string `json:"gap_end"`
-	Hours     int    `json:"hours"`
-	SameDay   bool   `json:"same_day_turnover"`
-	PrevGuest string `json:"prev_guest"`
-	NextGuest string `json:"next_guest"`
+	checkout    time.Time
+	nextCheckin time.Time
+	Unit        int    `json:"unit"`
+	GapStart    string `json:"gap_start"`
+	GapEnd      string `json:"gap_end"`
+	Hours       int    `json:"hours"`
+	SameDay     bool   `json:"same_day_turnover"`
+	PrevGuest   string `json:"prev_guest"`
+	NextGuest   string `json:"next_guest"`
 }
 
 type turnoverResult struct {
@@ -62,8 +64,13 @@ func newNovelTurnoverCmd(flags *rootFlags) *cobra.Command {
 				return fmt.Errorf("loading reservations: %w", err)
 			}
 
-			today := time.Now().Truncate(24 * time.Hour)
-			endDate := today.Add(time.Duration(days) * 24 * time.Hour)
+			location, err := propertyLocation()
+			if err != nil {
+				return err
+			}
+
+			today := calendarDate(time.Now(), location)
+			endDate := today.AddDate(0, 0, days)
 
 			// Group by unit and sort by check-in
 			byUnit := make(map[int][]reservation)
@@ -88,28 +95,33 @@ func newNovelTurnoverCmd(flags *rootFlags) *cobra.Command {
 					}
 
 					gapHours := int(nextCheckin.Sub(checkout).Hours())
-					sameDay := checkout.Truncate(24 * time.Hour).Equal(nextCheckin.Truncate(24 * time.Hour))
+					sameDay := calendarDate(checkout, checkout.Location()).Equal(calendarDate(nextCheckin, checkout.Location()))
 
 					if sameDay {
 						sameDayCount++
 					}
 
 					gaps = append(gaps, turnoverGap{
-						Unit:      unit,
-						GapStart:  checkout.Format("Jan 2 3:04 PM"),
-						GapEnd:    nextCheckin.Format("Jan 2 3:04 PM"),
-						Hours:     gapHours,
-						SameDay:   sameDay,
-						PrevGuest: fmt.Sprintf("%s %s", resos[i].GuestFirst, resos[i].GuestLast),
-						NextGuest: fmt.Sprintf("%s %s", resos[i+1].GuestFirst, resos[i+1].GuestLast),
+						Unit:        unit,
+						checkout:    checkout,
+						nextCheckin: nextCheckin,
+						Hours:       gapHours,
+						SameDay:     sameDay,
+						PrevGuest:   fmt.Sprintf("%s %s", resos[i].GuestFirst, resos[i].GuestLast),
+						NextGuest:   fmt.Sprintf("%s %s", resos[i+1].GuestFirst, resos[i+1].GuestLast),
 					})
 				}
 			}
 
 			// Sort by date
 			sort.Slice(gaps, func(i, j int) bool {
-				return gaps[i].GapStart < gaps[j].GapStart
+				return gaps[i].checkout.Before(gaps[j].checkout)
 			})
+
+			for i := range gaps {
+				gaps[i].GapStart = gaps[i].checkout.Format("Jan 2 3:04 PM")
+				gaps[i].GapEnd = gaps[i].nextCheckin.Format("Jan 2 3:04 PM")
+			}
 
 			result := turnoverResult{
 				Period:  fmt.Sprintf("Next %d days", days),

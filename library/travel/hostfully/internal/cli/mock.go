@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"github.com/spf13/cobra"
 	"strconv"
 	"time"
 )
@@ -34,4 +35,22 @@ func mockHostfullyReservations(now time.Time) []reservation {
 			DoorPIN:       "4404",
 		},
 	}
+}
+
+func printMockInbox(cmd *cobra.Command, flags *rootFlags) error {
+	thread := inboxThread{UID: "mock-thread"}
+	message := inboxMessage{UID: "mock-message", Content: inboxContent{Text: "Mock guest message"}}
+	result := map[string]any{"mock": true}
+	switch cmd.Name() {
+	case "show":
+		result["thread"] = thread
+		result["messages"] = []inboxMessage{message}
+	case "message":
+		result["message"] = message
+	case "messages":
+		result["messages"] = []inboxMessage{message}
+	default:
+		result["threads"] = []inboxThread{thread}
+	}
+	return printJSONFiltered(cmd.OutOrStdout(), result, flags)
 }

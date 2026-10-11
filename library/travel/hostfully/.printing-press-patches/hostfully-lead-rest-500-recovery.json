@@ -8,6 +8,8 @@
   "reason": "GET /leads is unreliable without propertyUid and intermittently fails with HTTP 500 for individual leads.",
   "files": [
     "internal/cli/hostfully_sync.go",
-    "internal/cli/hostfully_sync_test.go"
+    "internal/cli/hostfully_sync_test.go",
+    "internal/store/hostfully_archive.go",
+    "internal/cli/review_findings_test.go"
   ]
 }

@@ -58,24 +58,29 @@ func newNovelPatternsCmd(flags *rootFlags) *cobra.Command {
 				return fmt.Errorf("loading reservations: %w", err)
 			}
 
-			end := time.Now().Truncate(24 * time.Hour)
-			start := end.Add(-time.Duration(weeks*7) * 24 * time.Hour)
-			totalDays := int(end.Sub(start) / (24 * time.Hour))
+			location, err := propertyLocation()
+			if err != nil {
+				return err
+			}
+
+			end := calendarDate(time.Now(), location)
+			start := end.AddDate(0, 0, -weeks*7)
+			totalDays := calendarDays(start, end)
 
 			// Count occupied nights per day of week (across all units)
 			dayNights := make(map[time.Weekday]int)
 			dayCounts := make(map[time.Weekday]int) // total possible days per weekday
 
 			for i := 0; i < totalDays; i++ {
-				d := start.Add(time.Duration(i) * 24 * time.Hour)
+				d := start.AddDate(0, 0, i)
 				dayCounts[d.Weekday()]++
 			}
 
 			for _, r := range reservations {
-				ciDate := r.CheckIn.Truncate(24 * time.Hour)
-				coDate := r.CheckOut.Truncate(24 * time.Hour)
-				for d := ciDate; d.Before(coDate); d = d.Add(24 * time.Hour) {
-					if !d.Before(start) && d.Before(end) {
+				ciDate := calendarDate(r.CheckIn, r.CheckIn.Location())
+				coDate := calendarDate(r.CheckOut, r.CheckIn.Location())
+				for d := ciDate; d.Before(coDate); d = d.AddDate(0, 0, 1) {
+					if d.Format("2006-01-02") >= start.Format("2006-01-02") && d.Format("2006-01-02") < end.Format("2006-01-02") {
 						dayNights[d.Weekday()]++
 					}
 				}

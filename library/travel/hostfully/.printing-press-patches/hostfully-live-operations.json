@@ -12,6 +12,7 @@
     "internal/cli/availability.go",
     "internal/cli/availability_test.go",
     "internal/cli/guests.go",
-    "internal/cli/hostfully_ops_register.go"
+    "internal/cli/hostfully_ops_register.go",
+    "internal/cli/review_findings_test.go"
   ]
 }

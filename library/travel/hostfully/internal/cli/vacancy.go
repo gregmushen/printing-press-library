@@ -69,7 +69,12 @@ need multiple adjacent units free simultaneously.`,
 				return fmt.Errorf("loading reservations: %w", err)
 			}
 
-			today := time.Now().Truncate(24 * time.Hour)
+			location, err := propertyLocation()
+			if err != nil {
+				return err
+			}
+
+			today := calendarDate(time.Now(), location)
 
 			// Build occupancy map per unit
 			type occupancy map[int]map[string]bool // unit -> date_str -> occupied
@@ -82,10 +87,10 @@ need multiple adjacent units free simultaneously.`,
 				if _, ok := occ[r.Unit]; !ok {
 					continue
 				}
-				ciDate := r.CheckIn.Truncate(24 * time.Hour)
-				coDate := r.CheckOut.Truncate(24 * time.Hour)
+				ciDate := calendarDate(r.CheckIn, r.CheckIn.Location())
+				coDate := calendarDate(r.CheckOut, r.CheckIn.Location())
 				// Mark occupied: checkin <= day < checkout
-				for d := ciDate; d.Before(coDate); d = d.Add(24 * time.Hour) {
+				for d := ciDate; d.Before(coDate); d = d.AddDate(0, 0, 1) {
 					occ[r.Unit][d.Format("2006-01-02")] = true
 				}
 			}
@@ -93,7 +98,7 @@ need multiple adjacent units free simultaneously.`,
 			// Find days where ALL target units are vacant
 			var allVacantDays []time.Time
 			for i := 0; i < days; i++ {
-				day := today.Add(time.Duration(i) * 24 * time.Hour)
+				day := today.AddDate(0, 0, i)
 				dayStr := day.Format("2006-01-02")
 				allFree := true
 				for _, u := range targetUnits {
@@ -116,14 +121,14 @@ need multiple adjacent units free simultaneously.`,
 				j := i + 1
 				for j < len(allVacantDays) {
 					next := allVacantDays[j]
-					if next.Sub(end) == 24*time.Hour {
+					if next.Equal(end.AddDate(0, 0, 1)) {
 						end = next
 						j++
 					} else {
 						break
 					}
 				}
-				windowDays := int(end.Sub(start)/(24*time.Hour)) + 1
+				windowDays := j - i
 				if windowDays >= consecutive {
 					windows = append(windows, vacancyWindow{
 						Start: start.Format("Mon Jan 2"),

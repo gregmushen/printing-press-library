@@ -318,6 +318,10 @@ recovers only those missing records through the v3.3 GraphQL API.`,
 				return writeDryRun(cmd.OutOrStdout(), flags, "fetch")
 			}
 
+			if mockMode() {
+				return printJSONFiltered(cmd.OutOrStdout(), map[string]any{"mock": true, "status": "mock", "total_records": 0, "archive_written": false}, flags)
+			}
+
 			cfg, err := config.Load(flags.configPath)
 			if err != nil {
 				return err
@@ -362,9 +366,7 @@ recovers only those missing records through the v3.3 GraphQL API.`,
 			ctx, cancel := boundCtx(cmd.Context(), flags)
 			defer cancel()
 
-			if err := db.SaveSyncProgress(reservationArchiveState, "", 0); err != nil {
-				return fmt.Errorf("marking reservation fetch incomplete: %w", err)
-			}
+			staged := make(map[string][]json.RawMessage)
 			for _, unit := range units {
 				uid, _ := unitUID(unit)
 				result, err := fetch(bindLeadAPI(ctx, c), bindLeadAPI(ctx, graphQLClient), agencyUID, uid)
@@ -374,22 +376,8 @@ recovers only those missing records through the v3.3 GraphQL API.`,
 					continue
 				}
 
-				for _, lead := range result.Leads {
-					var item map[string]any
-					if err := json.Unmarshal(lead, &item); err != nil {
-						continue
-					}
-
-					id, _ := item["uid"].(string)
-					if id == "" {
-						continue
-					}
-
-					if err := db.Upsert("leads", id, lead); err != nil {
-						return fmt.Errorf("saving reservation %s: %w", id, err)
-					}
-					totalCount++
-				}
+				staged[uid] = result.Leads
+				totalCount += len(result.Leads)
 
 				if !flags.quiet {
 					fmt.Fprintf(progress, "  unit #%d: %d leads", unit, len(result.Leads))
@@ -403,7 +391,7 @@ recovers only those missing records through the v3.3 GraphQL API.`,
 				return fmt.Errorf("reservation fetch failed for units %v", failedUnits)
 			}
 
-			if err := db.SaveSyncState(reservationArchiveState, "", totalCount); err != nil {
+			if err := db.ReplaceHostfullyReservations(agencyUID, staged, reservationArchiveState); err != nil {
 				return fmt.Errorf("recording completed reservation fetch: %w", err)
 			}
 			duration := time.Since(startTime)

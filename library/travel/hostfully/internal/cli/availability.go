@@ -66,10 +66,10 @@ command fails instead of presenting cached or partial results as current.`,
 			if days < 1 {
 				return usageErr(fmt.Errorf("--days must be at least 1"))
 			}
+			if _, err := requireUnits(); err != nil {
+				return err
+			}
 			if unit > 0 {
-				if _, err := requireUnits(); err != nil {
-					return err
-				}
 				if _, ok := unitUID(unit); !ok {
 					return usageErr(fmt.Errorf("unknown unit %d", unit))
 				}
@@ -109,7 +109,7 @@ command fails instead of presenting cached or partial results as current.`,
 			fmt.Fprintf(w, "## Hostfully — %s\n\n", result.Period)
 			fmt.Fprint(w, "Unit")
 			for i := 0; i < days && i < 14; i++ { // cap display at 14 cols
-				d := today.Add(time.Duration(i) * 24 * time.Hour)
+				d := today.AddDate(0, 0, i)
 				fmt.Fprintf(w, "\t%s", d.Format("Mon 2"))
 			}
 			fmt.Fprintln(w)

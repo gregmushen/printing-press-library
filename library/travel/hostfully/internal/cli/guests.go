@@ -24,6 +24,10 @@ type guestInfo struct {
 }
 
 func newGuestsCmd(flags *rootFlags) *cobra.Command {
+	return newGuestsCmdWithLoader(flags, loadLiveReservationsForDate)
+}
+
+func newGuestsCmdWithLoader(flags *rootFlags, load func(*rootFlags, time.Time) ([]reservation, error)) *cobra.Command {
 	var dbPath string
 	var unit int
 
@@ -45,6 +49,15 @@ func newGuestsCmd(flags *rootFlags) *cobra.Command {
 			var reservations []reservation
 			if mockMode() {
 				reservations = mockHostfullyReservations(time.Now())
+			} else if flags.dataSource == "live" {
+				location, err := propertyLocation()
+				if err != nil {
+					return err
+				}
+				reservations, err = load(flags, time.Now().In(location))
+				if err != nil {
+					return fmt.Errorf("loading live reservations: %w", err)
+				}
 			} else {
 				if dbPath == "" {
 					dbPath = defaultDBPath("hostfully-pp-cli")
@@ -67,7 +80,7 @@ func newGuestsCmd(flags *rootFlags) *cobra.Command {
 			occupiedUnits := map[int]bool{}
 
 			for _, r := range reservations {
-				if guestStayingOnLocalDate(r, now) {
+				if operationalReservation(r) && guestStayingOnLocalDate(r, now) {
 					if unit > 0 && r.Unit != unit {
 						continue
 					}

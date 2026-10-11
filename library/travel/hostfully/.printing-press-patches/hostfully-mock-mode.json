@@ -9,6 +9,12 @@
   "files": [
     "internal/cli/mock.go",
     "internal/cli/mock_test.go",
-    "internal/cli/hostfully_ops_register.go"
+    "internal/cli/hostfully_ops_register.go",
+    "internal/cli/teach.go",
+    "internal/cli/jobs_list.go",
+    "internal/cli/inbox.go",
+    "internal/cli/quote.go",
+    "internal/cli/hostfully_sync.go",
+    "internal/cli/review_findings_test.go"
   ]
 }

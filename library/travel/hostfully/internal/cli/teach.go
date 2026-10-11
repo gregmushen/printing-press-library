@@ -59,7 +59,7 @@ func noLearnEnabled() bool {
 // noLearnActive combines the --no-learn flag with the env var so call
 // sites stay declarative.
 func noLearnActive(flags *rootFlags) bool {
-	if flags != nil && flags.noLearn {
+	if mockMode() || (flags != nil && flags.noLearn) {
 		return true
 	}
 	return noLearnEnabled()

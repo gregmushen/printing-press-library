@@ -245,7 +245,7 @@ func TestReviewFetchCompletionAndWriteFailure(t *testing.T) {
 			if (err == nil) != wantSuccess {
 				t.Fatalf("error=%v output=%s", err, out.String())
 			}
-			if (requireReservationArchive(db) == nil) != wantSuccess {
+			if (requireReservationArchive(db) == nil) != (wantSuccess || mode == "failed-refresh") {
 				t.Fatal("incorrect archive completion")
 			}
 			if !wantSuccess && strings.Contains(out.String(), `"status": "ok"`) {

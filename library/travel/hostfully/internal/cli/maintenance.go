@@ -66,8 +66,6 @@ func newNovelMaintenanceCmd(flags *rootFlags) *cobra.Command {
 				return fmt.Errorf("loading reservations: %w", err)
 			}
 
-			today := time.Now().Truncate(24 * time.Hour)
-
 			// Build occupancy per unit
 			occ := make(map[int]map[string]bool)
 			for _, u := range targetUnits {
@@ -78,9 +76,9 @@ func newNovelMaintenanceCmd(flags *rootFlags) *cobra.Command {
 				if _, ok := occ[r.Unit]; !ok {
 					continue
 				}
-				ciDate := r.CheckIn.Truncate(24 * time.Hour)
-				coDate := r.CheckOut.Truncate(24 * time.Hour)
-				for d := ciDate; d.Before(coDate); d = d.Add(24 * time.Hour) {
+				ciDate := calendarDate(r.CheckIn, r.CheckIn.Location())
+				coDate := calendarDate(r.CheckOut, r.CheckIn.Location())
+				for d := ciDate; d.Before(coDate); d = d.AddDate(0, 0, 1) {
 					occ[r.Unit][d.Format("2006-01-02")] = true
 				}
 			}
@@ -88,9 +86,14 @@ func newNovelMaintenanceCmd(flags *rootFlags) *cobra.Command {
 			// Find vacant windows per unit
 			var windows []maintWindow
 			for _, u := range targetUnits {
+				loc, err := propertyLocationForUID(mustUnitUID(u))
+				if err != nil {
+					return err
+				}
+				today := calendarDate(time.Now(), loc)
 				i := 0
 				for i < days {
-					day := today.Add(time.Duration(i) * 24 * time.Hour)
+					day := today.AddDate(0, 0, i)
 					dayStr := day.Format("2006-01-02")
 					if occ[u][dayStr] {
 						i++
@@ -100,13 +103,13 @@ func newNovelMaintenanceCmd(flags *rootFlags) *cobra.Command {
 					gapStart := day
 					j := i + 1
 					for j < days {
-						next := today.Add(time.Duration(j) * 24 * time.Hour)
+						next := today.AddDate(0, 0, j)
 						if occ[u][next.Format("2006-01-02")] {
 							break
 						}
 						j++
 					}
-					gapEnd := today.Add(time.Duration(j-1) * 24 * time.Hour)
+					gapEnd := today.AddDate(0, 0, j-1)
 					gapDays := j - i
 
 					if gapDays >= minDays {

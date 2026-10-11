@@ -60,20 +60,25 @@ func newNovelOccupancyCmd(flags *rootFlags) *cobra.Command {
 				return fmt.Errorf("loading reservations: %w", err)
 			}
 
+			location, err := propertyLocation()
+			if err != nil {
+				return err
+			}
+
 			var start, end time.Time
 			if month != "" {
-				t, err := time.Parse("2006-01", month)
+				t, err := time.ParseInLocation("2006-01", month, location)
 				if err != nil {
 					return fmt.Errorf("invalid month format (use YYYY-MM): %w", err)
 				}
 				start = t
 				end = t.AddDate(0, 1, 0)
 			} else {
-				end = time.Now().Truncate(24 * time.Hour)
-				start = end.Add(-time.Duration(days) * 24 * time.Hour)
+				end = calendarDate(time.Now(), location)
+				start = end.AddDate(0, 0, -days)
 			}
 
-			totalDays := int(end.Sub(start) / (24 * time.Hour))
+			totalDays := calendarDays(start, end)
 
 			// Count occupied days per unit
 			occDays := make(map[int]int)
@@ -82,18 +87,18 @@ func newNovelOccupancyCmd(flags *rootFlags) *cobra.Command {
 			}
 
 			for _, r := range reservations {
-				ciDate := r.CheckIn.Truncate(24 * time.Hour)
-				coDate := r.CheckOut.Truncate(24 * time.Hour)
+				ciDate := calendarDate(r.CheckIn, r.CheckIn.Location())
+				coDate := calendarDate(r.CheckOut, r.CheckIn.Location())
 
-				for d := ciDate; d.Before(coDate); d = d.Add(24 * time.Hour) {
-					if !d.Before(start) && d.Before(end) {
+				for d := ciDate; d.Before(coDate); d = d.AddDate(0, 0, 1) {
+					if d.Format("2006-01-02") >= start.Format("2006-01-02") && d.Format("2006-01-02") < end.Format("2006-01-02") {
 						occDays[r.Unit]++
 					}
 				}
 			}
 
 			result := occupancyResult{
-				Period: fmt.Sprintf("%s – %s", start.Format("Jan 2, 2006"), end.Add(-24*time.Hour).Format("Jan 2, 2006")),
+				Period: fmt.Sprintf("%s – %s", start.Format("Jan 2, 2006"), end.AddDate(0, 0, -1).Format("Jan 2, 2006")),
 			}
 
 			totalOccupied := 0
