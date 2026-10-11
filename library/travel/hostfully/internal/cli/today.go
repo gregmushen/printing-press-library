@@ -276,6 +276,23 @@ func summarizeReservations(reservations []reservation, day time.Time) todaySumma
 }
 
 func loadLiveReservationsForDate(flags *rootFlags, day time.Time) ([]reservation, error) {
+	return loadLiveReservations(flags, func(string) (time.Time, error) { return day, nil })
+}
+
+// loadLiveReservationsForLocalToday fetches each property's reservations for
+// that property's own current local date, so properties in different time
+// zones never share a single "today".
+func loadLiveReservationsForLocalToday(flags *rootFlags) ([]reservation, error) {
+	return loadLiveReservations(flags, func(uid string) (time.Time, error) {
+		location, err := propertyLocationForUID(uid)
+		if err != nil {
+			return time.Time{}, err
+		}
+		return time.Now().In(location), nil
+	})
+}
+
+func loadLiveReservations(flags *rootFlags, dayFor func(propertyUID string) (time.Time, error)) ([]reservation, error) {
 	cfg, err := config.Load(flags.configPath)
 	if err != nil {
 		return nil, err
@@ -301,8 +318,13 @@ func loadLiveReservationsForDate(flags *rootFlags, day time.Time) ([]reservation
 	defer cancel()
 	reservations := make([]reservation, 0)
 	for _, unit := range units {
+		propertyUID := mustUnitUID(unit)
+		day, err := dayFor(propertyUID)
+		if err != nil {
+			return nil, fmt.Errorf("unit %d: %w", unit, err)
+		}
 		result, err := fetchHostfullyUnitLeadsForDate(
-			bindLeadAPI(ctx, rest), bindLeadAPI(ctx, graphql), cfg.AgencyUID(), mustUnitUID(unit), day,
+			bindLeadAPI(ctx, rest), bindLeadAPI(ctx, graphql), cfg.AgencyUID(), propertyUID, day,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("unit %d: %w", unit, err)

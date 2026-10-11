@@ -121,7 +121,8 @@ func TestFindingsGuestsLiveNoArchive(t *testing.T) {
 	t.Setenv(timeZoneEnvVar, "UTC")
 	for _, fail := range []bool{false, true} {
 		called := false
-		cmd := newGuestsCmdWithLoader(&rootFlags{dataSource: "live", asJSON: true}, func(_ *rootFlags, day time.Time) ([]reservation, error) {
+		cmd := newGuestsCmdWithLoader(&rootFlags{dataSource: "live", asJSON: true}, func(_ *rootFlags) ([]reservation, error) {
+			day := time.Now().UTC()
 			called = true
 			if fail {
 				return nil, errors.New("live unavailable")
@@ -337,5 +338,16 @@ func TestFindingsFetchReconcilesAtomically(t *testing.T) {
 				t.Fatalf("legacy row commit/rollback: %v", err)
 			}
 		})
+	}
+}
+
+func TestLiveLocalTodayUsesEachPropertyZone(t *testing.T) {
+	reg := unitRegistry{}
+	reg.setPropertyTimeZones([]propertySummary{{UID: "east", TimeZone: "Pacific/Kiritimati"}, {UID: "west", TimeZone: "Pacific/Pago_Pago"}})
+	east, _ := time.LoadLocation("Pacific/Kiritimati")
+	west, _ := time.LoadLocation("Pacific/Pago_Pago")
+	now := time.Now()
+	if now.In(east).Format("2006-01-02") == now.In(west).Format("2006-01-02") {
+		t.Fatalf("fixture zones should straddle a date line")
 	}
 }

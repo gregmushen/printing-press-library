@@ -604,7 +604,7 @@ func journalInvocation(flags *rootFlags, rootCmd, executed *cobra.Command, err e
 	// The master --no-learn switch kills journaling too. On the
 	// parse-failure path the flag was never parsed into rootFlags, so
 	// the raw args are consulted as well.
-	if noLearnActive(flags) || argsDisableLearn(os.Args[1:]) {
+	if noLearnActive(flags) || argsDisableLearn(os.Args[1:]) || mockMode() {
 		return
 	}
 	exitCode := 0

@@ -15,6 +15,7 @@
     "internal/cli/inbox.go",
     "internal/cli/quote.go",
     "internal/cli/hostfully_sync.go",
-    "internal/cli/review_findings_test.go"
+    "internal/cli/review_findings_test.go",
+    "internal/cli/root.go"
   ]
 }

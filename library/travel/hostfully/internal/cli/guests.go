@@ -24,10 +24,10 @@ type guestInfo struct {
 }
 
 func newGuestsCmd(flags *rootFlags) *cobra.Command {
-	return newGuestsCmdWithLoader(flags, loadLiveReservationsForDate)
+	return newGuestsCmdWithLoader(flags, loadLiveReservationsForLocalToday)
 }
 
-func newGuestsCmdWithLoader(flags *rootFlags, load func(*rootFlags, time.Time) ([]reservation, error)) *cobra.Command {
+func newGuestsCmdWithLoader(flags *rootFlags, loadToday func(*rootFlags) ([]reservation, error)) *cobra.Command {
 	var dbPath string
 	var unit int
 
@@ -50,11 +50,8 @@ func newGuestsCmdWithLoader(flags *rootFlags, load func(*rootFlags, time.Time) (
 			if mockMode() {
 				reservations = mockHostfullyReservations(time.Now())
 			} else if flags.dataSource == "live" {
-				location, err := propertyLocation()
-				if err != nil {
-					return err
-				}
-				reservations, err = load(flags, time.Now().In(location))
+				var err error
+				reservations, err = loadToday(flags)
 				if err != nil {
 					return fmt.Errorf("loading live reservations: %w", err)
 				}
